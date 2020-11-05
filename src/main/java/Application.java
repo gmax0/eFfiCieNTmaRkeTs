@@ -1,12 +1,10 @@
+import buffer.OrderBookBuffer;
+import buffer.handlers.OrderBookEventHandler;
 import com.lmax.disruptor.RingBuffer;
-import common.config.BookkeeperConfig;
-import common.dto.OrderBookEvent;
-import info.bitrich.xchangestream.coinbasepro.CoinbaseProStreamingExchange;
-import info.bitrich.xchangestream.core.ProductSubscription;
-import info.bitrich.xchangestream.core.StreamingExchange;
-import info.bitrich.xchangestream.core.StreamingExchangeFactory;
-import io.reactivex.disposables.Disposable;
-import org.knowm.xchange.ExchangeSpecification;
+import org.cfg4j.provider.ConfigurationProvider;
+import org.cfg4j.provider.ConfigurationProviderBuilder;
+import org.cfg4j.source.ConfigurationSource;
+import org.cfg4j.source.classpath.ClasspathConfigurationSource;
 import org.knowm.xchange.currency.CurrencyPair;
 import org.knowm.xchange.dto.marketdata.OrderBook;
 import org.knowm.xchange.dto.trade.LimitOrder;
@@ -17,57 +15,29 @@ import org.knowm.xchart.XYSeries;
 import org.knowm.xchart.style.markers.SeriesMarkers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import service.Bookkeeper;
+import services.Bookkeeper;
+import streams.CoinbaseProExchangeStream;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static common.dto.Exchange.COINBASE_PRO;
+import static constants.Exchange.COINBASE_PRO;
 
 public class Application {
     public static Logger LOG = LoggerFactory.getLogger(Application.class);
 
     public static void main(String[] args) throws Exception {
-        Bookkeeper bookkeeper = Bookkeeper.builder()
-                .cfg(BookkeeperConfig.builder().bufferSize(1024).build())
-                .build();
-        bookkeeper.start();
+        //TODO: setup a dependency injection framework
+        Bookkeeper bookkeeper = new Bookkeeper();
+        OrderBookBuffer orderBookBuffer = new OrderBookBuffer(new OrderBookEventHandler(bookkeeper));
+        orderBookBuffer.start();
 
-        RingBuffer<OrderBookEvent> ringBuffer = bookkeeper.getRingBuffer();
-
-
-        //XChange Test Code
-        ExchangeSpecification coinbaseProSpec = new CoinbaseProStreamingExchange().getDefaultExchangeSpecification();
-
-        ProductSubscription productSubscription = ProductSubscription.create()
-                .addOrderbook(CurrencyPair.BTC_USD)
-                .addOrderbook(CurrencyPair.ETH_USD)
-                .build();
-
-        StreamingExchange coinbaseProExchange = StreamingExchangeFactory.INSTANCE.createExchange(coinbaseProSpec);
-
-        coinbaseProExchange.connect(productSubscription).blockingAwait();
-        Disposable subscription1 = coinbaseProExchange.getStreamingMarketDataService()
-                .getOrderBook(CurrencyPair.BTC_USD, 10) //Limit Max Depth
-                .subscribe(
-                        (trade) -> {
-                            LOG.info("Trade: {}", trade);
-                            ringBuffer.publishEvent((event, sequence, buffer) -> {
-                                event.orderBook = trade;
-                                event.exchange = COINBASE_PRO;
-                                event.currencyPair = CurrencyPair.BTC_USD;
-                            });
-                        },
-                        throwable -> LOG.error("Error in trade subscription", throwable));
-        /*
-        Disposable subscription2 = coinbaseProExchange.getStreamingMarketDataService()
-                .getOrderBook(CurrencyPair.ETH_USD, 10)
-                .subscribe(
-                        trade -> LOG.info("Trade: {}", trade),
-                        throwable -> LOG.error("Error in trade subscription", throwable));
-         */
+        CoinbaseProExchangeStream coinbaseProExchangeStream = new CoinbaseProExchangeStream(orderBookBuffer,
+                Arrays.asList(CurrencyPair.BTC_USD, CurrencyPair.ETH_USD), 10);
+        coinbaseProExchangeStream.start();
 
         Thread.sleep(2000);
 
@@ -148,24 +118,10 @@ public class Application {
                 }
             });
         }
-
-
-
-
-
-
-
-
-
-
-/*
-        subscription1.dispose();
-//        subscription2.dispose();
-
-        coinbaseProExchange.disconnect().blockingAwait();
+        /*
         bookkeeper.shutdown();
         LOG.info("END");
 
- */
+         */
     }
 }

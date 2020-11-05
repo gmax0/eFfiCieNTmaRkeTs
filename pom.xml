@@ -13,11 +13,14 @@
     </properties>
 
     <dependencies>
+        <!-- GUI Visualization -->
         <dependency>
             <groupId>org.knowm.xchart</groupId>
             <artifactId>xchart</artifactId>
             <version>3.6.5</version>
         </dependency>
+
+        <!-- Exchange Websocket Integrations -->
         <dependency>
             <groupId>org.knowm.xchange</groupId>
             <artifactId>xchange-stream-coinbasepro</artifactId>
@@ -28,11 +31,14 @@
             <artifactId>xchange-stream-kraken</artifactId>
             <version>5.0.3</version>
         </dependency>
+
+        <!-- Interthread Communication -->
         <dependency>
             <groupId>com.lmax</groupId>
             <artifactId>disruptor</artifactId>
             <version>3.4.2</version>
         </dependency>
+
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
