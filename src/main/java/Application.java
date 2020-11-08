@@ -1,10 +1,8 @@
 import buffer.OrderBookBuffer;
 import buffer.handlers.OrderBookEventHandler;
-import com.lmax.disruptor.RingBuffer;
-import org.cfg4j.provider.ConfigurationProvider;
-import org.cfg4j.provider.ConfigurationProviderBuilder;
-import org.cfg4j.source.ConfigurationSource;
-import org.cfg4j.source.classpath.ClasspathConfigurationSource;
+import config.Configuration;
+import config.CustomConversionHandler;
+import org.apache.commons.configuration2.YAMLConfiguration;
 import org.knowm.xchange.currency.CurrencyPair;
 import org.knowm.xchange.dto.marketdata.OrderBook;
 import org.knowm.xchange.dto.trade.LimitOrder;
@@ -15,6 +13,7 @@ import org.knowm.xchart.XYSeries;
 import org.knowm.xchart.style.markers.SeriesMarkers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import rest.CoinbaseProExchangeRestAPI;
 import services.Bookkeeper;
 import streams.CoinbaseProExchangeStream;
 
@@ -30,12 +29,38 @@ public class Application {
     public static Logger LOG = LoggerFactory.getLogger(Application.class);
 
     public static void main(String[] args) throws Exception {
+        //Test out Configuration Management
+        YAMLConfiguration yamlConfiguration = new YAMLConfiguration();
+        yamlConfiguration.setConversionHandler(new CustomConversionHandler());
+        yamlConfiguration.read(Application.class.getResourceAsStream("config.yaml"));
+        yamlConfiguration.getKeys().forEachRemaining(k -> {
+            LOG.info(k);
+        });
+        Configuration config = Configuration.builder()
+                .coinbaseProConfig(Configuration.CoinbaseProConfig.builder()
+                        .enabled(yamlConfiguration.getBoolean("exchange.coinbase_pro.enabled"))
+                        .apiKey(yamlConfiguration.getString("exchange.coinbase_pro.api.credentials.api_key"))
+                        .secretKey(yamlConfiguration.getString("exchange.coinbase_pro.api.credentials.secret_key"))
+                        .passphrase(yamlConfiguration.getString("exchange.coinbase_pro.api.credentials.passphrase"))
+                        .currencyPairs(yamlConfiguration.getList(CurrencyPair.class, "exchange.coinbase_pro.websocket.currency_pairs"))
+                        .build())
+                .build();
+
+        LOG.info(Boolean.toString(config.getCoinbaseProConfig().isEnabled()));
+        LOG.info(config.getCoinbaseProConfig().getApiKey());
+        LOG.info(config.getCoinbaseProConfig().getSecretKey());
+        LOG.info(config.getCoinbaseProConfig().getPassphrase());
+        LOG.info(config.getCoinbaseProConfig().getCurrencyPairs().toString());
+
+
+        CoinbaseProExchangeRestAPI coinbaseProExchangeRestAPI = new CoinbaseProExchangeRestAPI(config);
+
         //TODO: setup a dependency injection framework
         Bookkeeper bookkeeper = new Bookkeeper();
         OrderBookBuffer orderBookBuffer = new OrderBookBuffer(new OrderBookEventHandler(bookkeeper));
         orderBookBuffer.start();
 
-        CoinbaseProExchangeStream coinbaseProExchangeStream = new CoinbaseProExchangeStream(orderBookBuffer,
+        CoinbaseProExchangeStream coinbaseProExchangeStream = new CoinbaseProExchangeStream(config, orderBookBuffer,
                 Arrays.asList(CurrencyPair.BTC_USD, CurrencyPair.ETH_USD), 10);
         coinbaseProExchangeStream.start();
 

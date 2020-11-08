@@ -1,14 +1,12 @@
 package streams;
 
 import buffer.OrderBookBuffer;
-import com.lmax.disruptor.RingBuffer;
-import buffer.events.OrderBookEvent;
+import config.Configuration;
 import info.bitrich.xchangestream.coinbasepro.CoinbaseProStreamingExchange;
 import info.bitrich.xchangestream.core.ProductSubscription;
 import info.bitrich.xchangestream.core.StreamingExchange;
 import info.bitrich.xchangestream.core.StreamingExchangeFactory;
 import io.reactivex.disposables.Disposable;
-import lombok.Builder;
 import org.knowm.xchange.ExchangeSpecification;
 import org.knowm.xchange.currency.CurrencyPair;
 import org.slf4j.Logger;
@@ -32,23 +30,29 @@ public class CoinbaseProExchangeStream {
     protected List<CurrencyPair> currencyPairs;
     private int depth;
 
-    public CoinbaseProExchangeStream(OrderBookBuffer orderBookBuffer,
+    public CoinbaseProExchangeStream(Configuration config,
+                                     OrderBookBuffer orderBookBuffer,
                                      List<CurrencyPair> currencyPairs,
                                      int depth) {
-        ExchangeSpecification coinbaseProSpec = new CoinbaseProStreamingExchange().getDefaultExchangeSpecification();
+        if (config.getCoinbaseProConfig().isEnabled()) {
+            ExchangeSpecification coinbaseProSpec = new CoinbaseProStreamingExchange().getDefaultExchangeSpecification();
 
-        ProductSubscription.ProductSubscriptionBuilder builder = ProductSubscription.create();
-        for (CurrencyPair currencyPair : currencyPairs) {
-            builder = builder.addOrderbook(currencyPair);
+            //Setup ProductSubscription
+            ProductSubscription.ProductSubscriptionBuilder builder = ProductSubscription.create();
+            for (CurrencyPair currencyPair : config.getCoinbaseProConfig().getCurrencyPairs()) {
+                builder = builder.addOrderbook(currencyPair);
+            }
+            this.productSubscription = builder.build();
+
+            this.orderBookBuffer = orderBookBuffer;
+            this.currencyPairs = currencyPairs;
+            this.depth = depth;
+            this.subscriptions = new ArrayList<>();
+
+            this.streamingExchange = StreamingExchangeFactory.INSTANCE.createExchange(coinbaseProSpec);
+        } else {
+            LOG.info("CoinbasePro is disabled."); //TODO: Add exception here?
         }
-        this.productSubscription = builder.build();
-
-        this.orderBookBuffer = orderBookBuffer;
-        this.currencyPairs = currencyPairs;
-        this.depth = depth;
-        this.subscriptions = new ArrayList<>();
-
-        this.streamingExchange = StreamingExchangeFactory.INSTANCE.createExchange(coinbaseProSpec);
     }
 
     public void start() {
