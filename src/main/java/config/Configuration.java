@@ -21,6 +21,7 @@ public class Configuration {
         String secretKey;
         String passphrase;
         List<CurrencyPair> currencyPairs;
+        int depth;
     }
 
     @Builder

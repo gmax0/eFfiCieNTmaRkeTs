@@ -3,9 +3,11 @@ exchange:
   coinbase_pro:
     enabled: true
     websocket:
+      depth: 10
       currency_pairs:
         - "BTC_USD"
         - "ETH_USD"
+        - "LTC_USD"
     api:
       credentials:
         api_key: "${env:COINBASEPRO_API_KEY}"

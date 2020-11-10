@@ -31,9 +31,7 @@ public class CoinbaseProExchangeStream {
     private int depth;
 
     public CoinbaseProExchangeStream(Configuration config,
-                                     OrderBookBuffer orderBookBuffer,
-                                     List<CurrencyPair> currencyPairs,
-                                     int depth) {
+                                     OrderBookBuffer orderBookBuffer) {
         if (config.getCoinbaseProConfig().isEnabled()) {
             ExchangeSpecification coinbaseProSpec = new CoinbaseProStreamingExchange().getDefaultExchangeSpecification();
 
@@ -45,8 +43,8 @@ public class CoinbaseProExchangeStream {
             this.productSubscription = builder.build();
 
             this.orderBookBuffer = orderBookBuffer;
-            this.currencyPairs = currencyPairs;
-            this.depth = depth;
+            this.currencyPairs = config.getCoinbaseProConfig().getCurrencyPairs();
+            this.depth = config.getCoinbaseProConfig().getDepth();
             this.subscriptions = new ArrayList<>();
 
             this.streamingExchange = StreamingExchangeFactory.INSTANCE.createExchange(coinbaseProSpec);
@@ -66,7 +64,7 @@ public class CoinbaseProExchangeStream {
                     .getOrderBook(currencyPair, depth)
                     .subscribe(
                             (trade) -> {
-//                                LOG.info("Trade: {}", trade);
+                                LOG.info("Trade: {}", trade);
                                 orderBookBuffer.insert(trade, COINBASE_PRO, currencyPair);
                             },
                             throwable -> LOG.error("Error in trade subscription", throwable)));

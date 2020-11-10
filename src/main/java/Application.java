@@ -4,6 +4,7 @@ import config.Configuration;
 import config.CustomConversionHandler;
 import org.apache.commons.configuration2.YAMLConfiguration;
 import org.knowm.xchange.currency.CurrencyPair;
+import org.knowm.xchange.dto.Order;
 import org.knowm.xchange.dto.marketdata.OrderBook;
 import org.knowm.xchange.dto.trade.LimitOrder;
 import org.knowm.xchart.SwingWrapper;
@@ -19,11 +20,12 @@ import streams.CoinbaseProExchangeStream;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 import static constants.Exchange.COINBASE_PRO;
+import static org.knowm.xchange.currency.CurrencyPair.ETH_USD;
 
 public class Application {
     public static Logger LOG = LoggerFactory.getLogger(Application.class);
@@ -43,6 +45,7 @@ public class Application {
                         .secretKey(yamlConfiguration.getString("exchange.coinbase_pro.api.credentials.secret_key"))
                         .passphrase(yamlConfiguration.getString("exchange.coinbase_pro.api.credentials.passphrase"))
                         .currencyPairs(yamlConfiguration.getList(CurrencyPair.class, "exchange.coinbase_pro.websocket.currency_pairs"))
+                        .depth(yamlConfiguration.getInt("exchange.coinbase_pro.websocket.depth"))
                         .build())
                 .build();
 
@@ -57,11 +60,11 @@ public class Application {
 
         //TODO: setup a dependency injection framework
         Bookkeeper bookkeeper = new Bookkeeper();
+        bookkeeper.upsertOrderBook(COINBASE_PRO, ETH_USD, new OrderBook(new Date(), new ArrayList<LimitOrder>(), new ArrayList<LimitOrder>()));
         OrderBookBuffer orderBookBuffer = new OrderBookBuffer(new OrderBookEventHandler(bookkeeper));
         orderBookBuffer.start();
 
-        CoinbaseProExchangeStream coinbaseProExchangeStream = new CoinbaseProExchangeStream(config, orderBookBuffer,
-                Arrays.asList(CurrencyPair.BTC_USD, CurrencyPair.ETH_USD), 10);
+        CoinbaseProExchangeStream coinbaseProExchangeStream = new CoinbaseProExchangeStream(config, orderBookBuffer);
         coinbaseProExchangeStream.start();
 
         Thread.sleep(2000);
