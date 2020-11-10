@@ -22,6 +22,7 @@ public class Configuration {
         String passphrase;
         List<CurrencyPair> currencyPairs;
         int depth;
+        int refreshRate;
     }
 
     @Builder

@@ -9,9 +9,17 @@ exchange:
         - "ETH_USD"
         - "LTC_USD"
     api:
+      refresh_rate: 1
       credentials:
         api_key: "${env:COINBASEPRO_API_KEY}"
         secret_key: "${env:COINBASEPRO_SECRET_KEY}"
         passphrase: "${env:COINBASEPRO_PASSPHRASE}"
   kraken:
     enabled: false
+
+strategies:
+  n_angular:
+    enabled: false
+  oscillation:
+    enabled: false
+    min_deviation:

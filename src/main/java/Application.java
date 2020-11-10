@@ -1,10 +1,8 @@
 import buffer.OrderBookBuffer;
-import buffer.handlers.OrderBookEventHandler;
 import config.Configuration;
 import config.CustomConversionHandler;
 import org.apache.commons.configuration2.YAMLConfiguration;
 import org.knowm.xchange.currency.CurrencyPair;
-import org.knowm.xchange.dto.Order;
 import org.knowm.xchange.dto.marketdata.OrderBook;
 import org.knowm.xchange.dto.trade.LimitOrder;
 import org.knowm.xchart.SwingWrapper;
@@ -23,6 +21,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import static constants.Exchange.COINBASE_PRO;
 import static org.knowm.xchange.currency.CurrencyPair.ETH_USD;
@@ -55,13 +56,30 @@ public class Application {
         LOG.info(config.getCoinbaseProConfig().getPassphrase());
         LOG.info(config.getCoinbaseProConfig().getCurrencyPairs().toString());
 
-
+        //Setup Publishers
         CoinbaseProExchangeRestAPI coinbaseProExchangeRestAPI = new CoinbaseProExchangeRestAPI(config);
 
+        //Setup ThreadExecutors
+        ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
+        scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    coinbaseProExchangeRestAPI.refreshProducts();
+                    coinbaseProExchangeRestAPI.refreshAccountInfo();
+                    coinbaseProExchangeRestAPI.refreshFees();
+                } catch (Exception e) {
+                    Thread.currentThread().getUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), e);
+                }
+            }
+        }, 0, 1, TimeUnit.SECONDS);
+//        scheduledExecutorService.shutdown();
+
+        //Setup Services
         //TODO: setup a dependency injection framework
         Bookkeeper bookkeeper = new Bookkeeper();
         bookkeeper.upsertOrderBook(COINBASE_PRO, ETH_USD, new OrderBook(new Date(), new ArrayList<LimitOrder>(), new ArrayList<LimitOrder>()));
-        OrderBookBuffer orderBookBuffer = new OrderBookBuffer(new OrderBookEventHandler(bookkeeper));
+        OrderBookBuffer orderBookBuffer = new OrderBookBuffer(bookkeeper);
         orderBookBuffer.start();
 
         CoinbaseProExchangeStream coinbaseProExchangeStream = new CoinbaseProExchangeStream(config, orderBookBuffer);

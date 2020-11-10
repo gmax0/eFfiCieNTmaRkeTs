@@ -1,6 +1,5 @@
 package buffer;
 
-import buffer.handlers.OrderBookEventHandler;
 import com.lmax.disruptor.RingBuffer;
 import com.lmax.disruptor.SleepingWaitStrategy;
 import com.lmax.disruptor.dsl.Disruptor;
@@ -12,6 +11,7 @@ import org.knowm.xchange.currency.CurrencyPair;
 import org.knowm.xchange.dto.marketdata.OrderBook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import services.Bookkeeper;
 
 /**
  * Disruptor-backed Buffer exclusively used for OrderBookEvents
@@ -26,7 +26,7 @@ public class OrderBookBuffer {
     private RingBuffer ringBuffer;
 
     @Builder
-    public OrderBookBuffer(OrderBookEventHandler orderBookEventHandler) {
+    public OrderBookBuffer(Bookkeeper bookkeeper) {
         //TODO: configurize disruptor parameters
         this.disruptor = new Disruptor(
                 OrderBookEvent::new,
@@ -35,7 +35,8 @@ public class OrderBookBuffer {
                 ProducerType.MULTI,
                 new SleepingWaitStrategy());
 
-        disruptor.handleEventsWith(orderBookEventHandler);
+        disruptor.handleEventsWith(bookkeeper, bookkeeper);
+        disruptor.after(bookkeeper);
         disruptor.setDefaultExceptionHandler(new ExceptionHandler<>());
 
         this.ringBuffer = disruptor.getRingBuffer();

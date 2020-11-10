@@ -1,5 +1,7 @@
 package services;
 
+import buffer.events.OrderBookEvent;
+import com.lmax.disruptor.EventHandler;
 import constants.Exchange;
 import org.knowm.xchange.currency.CurrencyPair;
 import org.knowm.xchange.dto.marketdata.OrderBook;
@@ -10,13 +12,18 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class Bookkeeper {
+public class Bookkeeper implements EventHandler<OrderBookEvent> {
     private static Logger LOG = LoggerFactory.getLogger(Bookkeeper.class);
 
     //TODO: Ensure the nested map is thread safe
     private final Map<Exchange, Map<CurrencyPair, OrderBook>> orderBooks = new ConcurrentHashMap<>();
 
     public Bookkeeper() {
+    }
+
+    @Override
+    public void onEvent(OrderBookEvent event, long sequence, boolean endOfBatch) {
+        this.upsertOrderBook(event.exchange, event.currencyPair, event.orderBook);
     }
 
     public void upsertOrderBook(Exchange exchange, CurrencyPair currencyPair, OrderBook orderBook) {

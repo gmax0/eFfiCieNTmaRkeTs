@@ -64,7 +64,7 @@ public class CoinbaseProExchangeStream {
                     .getOrderBook(currencyPair, depth)
                     .subscribe(
                             (trade) -> {
-                                LOG.info("Trade: {}", trade);
+//                                LOG.info("Trade: {}", trade);
                                 orderBookBuffer.insert(trade, COINBASE_PRO, currencyPair);
                             },
                             throwable -> LOG.error("Error in trade subscription", throwable)));
