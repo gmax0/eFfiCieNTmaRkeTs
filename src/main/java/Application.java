@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rest.CoinbaseProExchangeRestAPI;
 import services.Bookkeeper;
+import streams.BitfinexExchangeStream;
 import streams.CoinbaseProExchangeStream;
 
 import java.math.BigDecimal;
@@ -25,6 +26,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import static constants.Exchange.BITFINEX;
 import static constants.Exchange.COINBASE_PRO;
 import static org.knowm.xchange.currency.CurrencyPair.ETH_USD;
 
@@ -32,12 +34,12 @@ public class Application {
     public static Logger LOG = LoggerFactory.getLogger(Application.class);
 
     public static void main(String[] args) throws Exception {
-        //Test out Configuration Management
+        //Setup Configs
         YAMLConfiguration yamlConfiguration = new YAMLConfiguration();
         yamlConfiguration.setConversionHandler(new CustomConversionHandler());
         yamlConfiguration.read(Application.class.getResourceAsStream("config.yaml"));
         yamlConfiguration.getKeys().forEachRemaining(k -> {
-            LOG.info(k);
+            LOG.debug(k);
         });
         Configuration config = Configuration.builder()
                 .coinbaseProConfig(Configuration.CoinbaseProConfig.builder()
@@ -47,6 +49,14 @@ public class Application {
                         .passphrase(yamlConfiguration.getString("exchange.coinbase_pro.api.credentials.passphrase"))
                         .currencyPairs(yamlConfiguration.getList(CurrencyPair.class, "exchange.coinbase_pro.websocket.currency_pairs"))
                         .depth(yamlConfiguration.getInt("exchange.coinbase_pro.websocket.depth"))
+                        .build())
+                .bitfinexConfig(Configuration.BitfinexConfig.builder()
+                        .enabled(yamlConfiguration.getBoolean("exchange.bitfinex.enabled"))
+                        .apiKey(yamlConfiguration.getString("exchange.bitfinex.api.credentials.api_key"))
+                        .secretKey(yamlConfiguration.getString("exchange.bitfinex.api.credentials.secret_key"))
+                        .passphrase(yamlConfiguration.getString("exchange.bitfinex.api.credentials.passphrase"))
+                        .currencyPairs(yamlConfiguration.getList(CurrencyPair.class, "exchange.bitfinex.websocket.currency_pairs"))
+                        .depth(yamlConfiguration.getInt("exchange.bitfinex.websocket.depth"))
                         .build())
                 .build();
 
@@ -78,20 +88,25 @@ public class Application {
         //Setup Services
         //TODO: setup a dependency injection framework
         Bookkeeper bookkeeper = new Bookkeeper();
-        bookkeeper.upsertOrderBook(COINBASE_PRO, ETH_USD, new OrderBook(new Date(), new ArrayList<LimitOrder>(), new ArrayList<LimitOrder>()));
         OrderBookBuffer orderBookBuffer = new OrderBookBuffer(bookkeeper);
         orderBookBuffer.start();
 
+        /*
         CoinbaseProExchangeStream coinbaseProExchangeStream = new CoinbaseProExchangeStream(config, orderBookBuffer);
         coinbaseProExchangeStream.start();
 
+         */
+        BitfinexExchangeStream bitfinexExchangeStream = new BitfinexExchangeStream(config, orderBookBuffer);
+        bitfinexExchangeStream.start();
+
         Thread.sleep(2000);
+
 
         //Real-Time Chart Testing
         XYChart chart = new XYChartBuilder().width(800).height(600).title("CoinbasePro Order Book").xAxisTitle("USD").yAxisTitle("BTC").build();
         chart.getStyler().setDefaultSeriesRenderStyle(XYSeries.XYSeriesRenderStyle.Area);
 
-        OrderBook orderBook = bookkeeper.getOrderBook(COINBASE_PRO, CurrencyPair.BTC_USD);
+        OrderBook orderBook = bookkeeper.getOrderBook(BITFINEX, CurrencyPair.BTC_USD);
         // BIDS
         List<Number> xData = new ArrayList<>();
         List<Number> yData = new ArrayList<>();
@@ -129,7 +144,7 @@ public class Application {
             javax.swing.SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
-                    OrderBook orderBook = bookkeeper.getOrderBook(COINBASE_PRO, CurrencyPair.BTC_USD);
+                    OrderBook orderBook = bookkeeper.getOrderBook(BITFINEX, CurrencyPair.BTC_USD);
                     // BIDS
                     List<Number> xData = new ArrayList<>();
                     List<Number> yData = new ArrayList<>();

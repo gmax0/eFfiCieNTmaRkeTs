@@ -2,7 +2,7 @@ package streams;
 
 import buffer.OrderBookBuffer;
 import config.Configuration;
-import info.bitrich.xchangestream.coinbasepro.CoinbaseProStreamingExchange;
+import info.bitrich.xchangestream.bitfinex.BitfinexStreamingExchange;
 import info.bitrich.xchangestream.core.ProductSubscription;
 import info.bitrich.xchangestream.core.StreamingExchange;
 import info.bitrich.xchangestream.core.StreamingExchangeFactory;
@@ -15,12 +15,10 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 
-import static constants.Exchange.COINBASE_PRO;
+import static constants.Exchange.BITFINEX;
 
-
-public class CoinbaseProExchangeStream {
-
-    private static final Logger LOG = LoggerFactory.getLogger(CoinbaseProExchangeStream.class);
+public class BitfinexExchangeStream {
+    private static final Logger LOG = LoggerFactory.getLogger(BitfinexExchangeStream.class);
 
     private StreamingExchange streamingExchange;
     private ProductSubscription productSubscription;
@@ -30,26 +28,27 @@ public class CoinbaseProExchangeStream {
     protected List<CurrencyPair> currencyPairs;
     private int depth;
 
-    public CoinbaseProExchangeStream(Configuration config,
-                                     OrderBookBuffer orderBookBuffer) {
-        if (config.getCoinbaseProConfig().isEnabled()) {
-            ExchangeSpecification coinbaseProSpec = new CoinbaseProStreamingExchange().getDefaultExchangeSpecification();
+    public BitfinexExchangeStream(Configuration config,
+                                  OrderBookBuffer orderBookBuffer) {
+        if (config.getBitfinexConfig().isEnabled()) {
+            ExchangeSpecification exchangeSpecification = new BitfinexStreamingExchange()
+                    .getDefaultExchangeSpecification();
 
             //Setup ProductSubscription
             ProductSubscription.ProductSubscriptionBuilder builder = ProductSubscription.create();
-            for (CurrencyPair currencyPair : config.getCoinbaseProConfig().getCurrencyPairs()) {
+            for (CurrencyPair currencyPair : config.getBitfinexConfig().getCurrencyPairs()) {
                 builder = builder.addOrderbook(currencyPair);
             }
             this.productSubscription = builder.build();
 
             this.orderBookBuffer = orderBookBuffer;
-            this.currencyPairs = config.getCoinbaseProConfig().getCurrencyPairs();
-            this.depth = config.getCoinbaseProConfig().getDepth();
+            this.currencyPairs = config.getBitfinexConfig().getCurrencyPairs();
+            this.depth = config.getBitfinexConfig().getDepth();
             this.subscriptions = new ArrayList<>();
 
-            this.streamingExchange = StreamingExchangeFactory.INSTANCE.createExchange(coinbaseProSpec);
+            this.streamingExchange = StreamingExchangeFactory.INSTANCE.createExchange(exchangeSpecification);
         } else {
-            LOG.warn("CoinbasePro is disabled."); //TODO: Add exception here?
+            LOG.warn("Bitfinex is disabled."); //TODO: Add exception here?
         }
     }
 
@@ -60,14 +59,14 @@ public class CoinbaseProExchangeStream {
         LOG.info("Creating subscriptions...");
         currencyPairs.stream().forEach(currencyPair -> {
             subscriptions.add(
-            streamingExchange.getStreamingMarketDataService()
-                    .getOrderBook(currencyPair, depth)
-                    .subscribe(
-                            (trade) -> {
+                    streamingExchange.getStreamingMarketDataService()
+                            .getOrderBook(currencyPair, depth)
+                            .subscribe(
+                                    (trade) -> {
 //                                LOG.info("Trade: {}", trade);
-                                orderBookBuffer.insert(trade, COINBASE_PRO, currencyPair);
-                            },
-                            throwable -> LOG.error("Error in trade subscription", throwable)));
+                                        orderBookBuffer.insert(trade, BITFINEX, currencyPair);
+                                    },
+                                    throwable -> LOG.error("Error in trade subscription", throwable)));
         });
     }
 

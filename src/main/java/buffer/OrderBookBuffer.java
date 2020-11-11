@@ -35,8 +35,9 @@ public class OrderBookBuffer {
                 ProducerType.MULTI,
                 new SleepingWaitStrategy());
 
-        disruptor.handleEventsWith(bookkeeper, bookkeeper);
-        disruptor.after(bookkeeper);
+        disruptor.handleEventsWith(bookkeeper);
+//        disruptor.handleEventsWith(bookkeeper, bookkeeper);
+//        disruptor.after(bookkeeper);
         disruptor.setDefaultExceptionHandler(new ExceptionHandler<>());
 
         this.ringBuffer = disruptor.getRingBuffer();

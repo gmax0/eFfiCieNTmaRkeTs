@@ -1,4 +1,11 @@
 
+strategies:
+  n_angular:
+    enabled: false
+  oscillation:
+    enabled: false
+    min_deviation:
+
 exchange:
   coinbase_pro:
     enabled: true
@@ -16,10 +23,16 @@ exchange:
         passphrase: "${env:COINBASEPRO_PASSPHRASE}"
   kraken:
     enabled: false
-
-strategies:
-  n_angular:
-    enabled: false
-  oscillation:
-    enabled: false
-    min_deviation:
+  bitfinex:
+    enabled: true
+    websocket:
+      depth: 25 #1, 25, 100
+      currency_pairs:
+        - "BTC_USD"
+        - "ETH_USD"
+    api:
+      refresh_rate: 1
+      credentials:
+        api_key: "${env:BITFINEX_API_KEY}"
+        secret_key: "${env:BITFINEX_SECRET_KEY}"
+        passphrase: "${env:BITFINEX_PASSPHRASE}"

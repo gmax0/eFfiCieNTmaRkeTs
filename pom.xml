@@ -45,6 +45,11 @@
             <artifactId>xchange-stream-kraken</artifactId>
             <version>5.0.3</version>
         </dependency>
+        <dependency>
+            <groupId>org.knowm.xchange</groupId>
+            <artifactId>xchange-stream-bitfinex</artifactId>
+            <version>5.0.3</version>
+        </dependency>
 
         <!-- Interthread Communication -->
         <dependency>

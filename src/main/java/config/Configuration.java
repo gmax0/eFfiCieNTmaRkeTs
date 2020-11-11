@@ -2,6 +2,7 @@ package config;
 
 import lombok.Builder;
 import lombok.Getter;
+import lombok.experimental.SuperBuilder;
 import org.knowm.xchange.currency.CurrencyPair;
 
 import java.util.List;
@@ -12,10 +13,11 @@ public class Configuration {
 
     private CoinbaseProConfig coinbaseProConfig;
     private KrakenConfig krakenConfig;
+    private BitfinexConfig bitfinexConfig;
 
-    @Builder
+    @SuperBuilder
     @Getter
-    public static class CoinbaseProConfig {
+    public static abstract class ExchangeConfig {
         boolean enabled;
         String apiKey;
         String secretKey;
@@ -25,9 +27,18 @@ public class Configuration {
         int refreshRate;
     }
 
-    @Builder
-    @Getter
-    public static class KrakenConfig {
+    @SuperBuilder
+    public static class CoinbaseProConfig extends ExchangeConfig {
+        int additionalParam;
+    }
 
+    @SuperBuilder
+    public static class KrakenConfig extends ExchangeConfig {
+        int additionalParam;
+    }
+
+    @SuperBuilder
+    public static class BitfinexConfig extends ExchangeConfig {
+        int additionalParam;
     }
 }
