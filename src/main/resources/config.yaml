@@ -4,7 +4,7 @@ strategies:
     enabled: false
   oscillation:
     enabled: false
-    min_deviation:
+    min_gain: .002
 
 exchange:
   coinbase_pro:
@@ -35,4 +35,3 @@ exchange:
       credentials:
         api_key: "${env:BITFINEX_API_KEY}"
         secret_key: "${env:BITFINEX_SECRET_KEY}"
-        passphrase: "${env:BITFINEX_PASSPHRASE}"

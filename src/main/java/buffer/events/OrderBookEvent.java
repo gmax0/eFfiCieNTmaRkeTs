@@ -23,5 +23,4 @@ public class OrderBookEvent {
             event.setCurrencyPair(arg2);
         }
     };
-
 }

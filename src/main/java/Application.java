@@ -1,4 +1,5 @@
 import buffer.OrderBookBuffer;
+import buffer.TradeBuffer;
 import config.Configuration;
 import config.CustomConversionHandler;
 import org.apache.commons.configuration2.YAMLConfiguration;
@@ -12,23 +13,20 @@ import org.knowm.xchart.XYSeries;
 import org.knowm.xchart.style.markers.SeriesMarkers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import rest.BitfinexExchangeRestAPI;
 import rest.CoinbaseProExchangeRestAPI;
 import services.Bookkeeper;
+import services.MetadataAggregator;
+import services.OscillationArbitrager;
 import streams.BitfinexExchangeStream;
 import streams.CoinbaseProExchangeStream;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 import static constants.Exchange.BITFINEX;
-import static constants.Exchange.COINBASE_PRO;
-import static org.knowm.xchange.currency.CurrencyPair.ETH_USD;
 
 public class Application {
     public static Logger LOG = LoggerFactory.getLogger(Application.class);
@@ -42,6 +40,10 @@ public class Application {
             LOG.debug(k);
         });
         Configuration config = Configuration.builder()
+                .oscillationArbitragerConfig(Configuration.OscillationArbitragerConfig.builder()
+                        .enabled(yamlConfiguration.getBoolean("strategies.oscillation.enabled"))
+                        .minGain(yamlConfiguration.getBigDecimal("strategies.oscillation.min_gain"))
+                        .build())
                 .coinbaseProConfig(Configuration.CoinbaseProConfig.builder()
                         .enabled(yamlConfiguration.getBoolean("exchange.coinbase_pro.enabled"))
                         .apiKey(yamlConfiguration.getString("exchange.coinbase_pro.api.credentials.api_key"))
@@ -54,7 +56,6 @@ public class Application {
                         .enabled(yamlConfiguration.getBoolean("exchange.bitfinex.enabled"))
                         .apiKey(yamlConfiguration.getString("exchange.bitfinex.api.credentials.api_key"))
                         .secretKey(yamlConfiguration.getString("exchange.bitfinex.api.credentials.secret_key"))
-                        .passphrase(yamlConfiguration.getString("exchange.bitfinex.api.credentials.passphrase"))
                         .currencyPairs(yamlConfiguration.getList(CurrencyPair.class, "exchange.bitfinex.websocket.currency_pairs"))
                         .depth(yamlConfiguration.getInt("exchange.bitfinex.websocket.depth"))
                         .build())
@@ -65,11 +66,23 @@ public class Application {
         LOG.info(config.getCoinbaseProConfig().getSecretKey());
         LOG.info(config.getCoinbaseProConfig().getPassphrase());
         LOG.info(config.getCoinbaseProConfig().getCurrencyPairs().toString());
+        LOG.info(config.getBitfinexConfig().getApiKey());
+
+        //Setup Services and Buffers
+        //TODO: setup a dependency injection framework
+        MetadataAggregator metadataAggregator = new MetadataAggregator();
+        TradeBuffer tradeBuffer = new TradeBuffer();
+        Bookkeeper bookkeeper = new Bookkeeper();
+        OscillationArbitrager oscillationArbitrager = new OscillationArbitrager(config, metadataAggregator, tradeBuffer);
+        OrderBookBuffer orderBookBuffer = new OrderBookBuffer(bookkeeper, oscillationArbitrager);
+        orderBookBuffer.start();
 
         //Setup Publishers
-        CoinbaseProExchangeRestAPI coinbaseProExchangeRestAPI = new CoinbaseProExchangeRestAPI(config);
+        CoinbaseProExchangeRestAPI coinbaseProExchangeRestAPI = new CoinbaseProExchangeRestAPI(config, metadataAggregator);
+        BitfinexExchangeRestAPI bitfinexExchangeRestAPI = new BitfinexExchangeRestAPI(config, metadataAggregator);
 
         //Setup ThreadExecutors
+        /*
         ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
         scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
             @Override
@@ -78,24 +91,22 @@ public class Application {
                     coinbaseProExchangeRestAPI.refreshProducts();
                     coinbaseProExchangeRestAPI.refreshAccountInfo();
                     coinbaseProExchangeRestAPI.refreshFees();
+
+                    bitfinexExchangeRestAPI.refreshProducts();
+                    bitfinexExchangeRestAPI.refreshAccountInfo();
+                    bitfinexExchangeRestAPI.refreshFees();
                 } catch (Exception e) {
                     Thread.currentThread().getUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), e);
                 }
             }
         }, 0, 1, TimeUnit.SECONDS);
-//        scheduledExecutorService.shutdown();
-
-        //Setup Services
-        //TODO: setup a dependency injection framework
-        Bookkeeper bookkeeper = new Bookkeeper();
-        OrderBookBuffer orderBookBuffer = new OrderBookBuffer(bookkeeper);
-        orderBookBuffer.start();
-
-        /*
-        CoinbaseProExchangeStream coinbaseProExchangeStream = new CoinbaseProExchangeStream(config, orderBookBuffer);
-        coinbaseProExchangeStream.start();
 
          */
+//        scheduledExecutorService.shutdown();
+
+
+        CoinbaseProExchangeStream coinbaseProExchangeStream = new CoinbaseProExchangeStream(config, orderBookBuffer);
+        coinbaseProExchangeStream.start();
         BitfinexExchangeStream bitfinexExchangeStream = new BitfinexExchangeStream(config, orderBookBuffer);
         bitfinexExchangeStream.start();
 

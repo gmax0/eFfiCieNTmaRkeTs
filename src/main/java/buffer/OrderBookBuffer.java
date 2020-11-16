@@ -12,6 +12,7 @@ import org.knowm.xchange.dto.marketdata.OrderBook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import services.Bookkeeper;
+import services.OscillationArbitrager;
 
 /**
  * Disruptor-backed Buffer exclusively used for OrderBookEvents
@@ -26,7 +27,7 @@ public class OrderBookBuffer {
     private RingBuffer ringBuffer;
 
     @Builder
-    public OrderBookBuffer(Bookkeeper bookkeeper) {
+    public OrderBookBuffer(Bookkeeper bookkeeper, OscillationArbitrager oscillationArbitrager) {
         //TODO: configurize disruptor parameters
         this.disruptor = new Disruptor(
                 OrderBookEvent::new,
@@ -35,7 +36,7 @@ public class OrderBookBuffer {
                 ProducerType.MULTI,
                 new SleepingWaitStrategy());
 
-        disruptor.handleEventsWith(bookkeeper);
+        disruptor.handleEventsWith(bookkeeper, oscillationArbitrager);
 //        disruptor.handleEventsWith(bookkeeper, bookkeeper);
 //        disruptor.after(bookkeeper);
         disruptor.setDefaultExceptionHandler(new ExceptionHandler<>());

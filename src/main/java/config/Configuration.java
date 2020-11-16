@@ -5,15 +5,24 @@ import lombok.Getter;
 import lombok.experimental.SuperBuilder;
 import org.knowm.xchange.currency.CurrencyPair;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Builder
 @Getter
 public class Configuration {
 
+    private OscillationArbitragerConfig oscillationArbitragerConfig;
     private CoinbaseProConfig coinbaseProConfig;
     private KrakenConfig krakenConfig;
     private BitfinexConfig bitfinexConfig;
+
+    @Builder
+    @Getter
+    public static class OscillationArbitragerConfig {
+        boolean enabled;
+        BigDecimal minGain;
+    }
 
     @SuperBuilder
     @Getter
