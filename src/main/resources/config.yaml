@@ -22,7 +22,17 @@ exchange:
         secret_key: "${env:COINBASEPRO_SECRET_KEY}"
         passphrase: "${env:COINBASEPRO_PASSPHRASE}"
   kraken:
-    enabled: false
+    enabled: true
+    websocket:
+      depth: 10
+      currency_pairs:
+        - "BTC_USD"
+        - "ETH_USD"
+    api:
+      refresh_rate: 1
+      credentials:
+        api_key: "${env:KRAKEN_API_KEY}"
+        secret_key: "${env:KRAKEN_SECRET_KEY}"
   bitfinex:
     enabled: true
     websocket:

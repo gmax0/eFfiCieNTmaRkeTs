@@ -27,7 +27,7 @@ public class Bookkeeper implements EventHandler<OrderBookEvent> {
     }
 
     public void upsertOrderBook(Exchange exchange, CurrencyPair currencyPair, OrderBook orderBook) {
-        LOG.debug("This is my upsert thread");
+//        LOG.debug("This is my upsert thread");
         orderBooks.computeIfAbsent(exchange, (k) -> {
             return new HashMap<>();
         });
@@ -35,7 +35,7 @@ public class Bookkeeper implements EventHandler<OrderBookEvent> {
     }
 
     public OrderBook getOrderBook(Exchange exchange, CurrencyPair currencyPair) {
-        LOG.debug("This is my get thread");
+//        LOG.debug("This is my get thread");
         return orderBooks.get(exchange).get(currencyPair);
     }
 

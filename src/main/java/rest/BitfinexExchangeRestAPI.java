@@ -24,7 +24,7 @@ import java.util.Map;
 import static constants.Exchange.BITFINEX;
 
 public class BitfinexExchangeRestAPI {
-    private static final Logger LOG = LoggerFactory.getLogger(CoinbaseProExchangeRestAPI.class);
+    private static final Logger LOG = LoggerFactory.getLogger(BitfinexExchangeRestAPI.class);
 
     private Exchange exchange;
     private BitfinexAccountService accountService;
@@ -66,12 +66,11 @@ public class BitfinexExchangeRestAPI {
             refreshFees();
             refreshAccountInfo();
         } else {
-            LOG.info("CoinbaseProRestAPI is disabled"); //TODO: Replace with exception?
+            LOG.info("BitfinexRestAPI is disabled"); //TODO: Replace with exception?
         }
     }
 
     public void refreshProducts() throws IOException {
-        exchange.remoteInit();
         metadataMap = exchange.getExchangeMetaData().getCurrencyPairs(); //NOTE: trading fees are not correct
         metadataAggregator.upsertMetadata(BITFINEX, metadataMap);
     }

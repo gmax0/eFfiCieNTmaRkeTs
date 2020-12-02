@@ -38,16 +38,13 @@ public class Configuration {
 
     @SuperBuilder
     public static class CoinbaseProConfig extends ExchangeConfig {
-        int additionalParam;
     }
 
     @SuperBuilder
     public static class KrakenConfig extends ExchangeConfig {
-        int additionalParam;
     }
 
     @SuperBuilder
     public static class BitfinexConfig extends ExchangeConfig {
-        int additionalParam;
     }
 }

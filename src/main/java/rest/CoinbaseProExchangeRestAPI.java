@@ -5,7 +5,6 @@ import org.knowm.xchange.Exchange;
 import org.knowm.xchange.ExchangeFactory;
 import org.knowm.xchange.ExchangeSpecification;
 import org.knowm.xchange.coinbasepro.CoinbaseProExchange;
-import org.knowm.xchange.coinbasepro.dto.marketdata.CoinbaseProProduct;
 import org.knowm.xchange.coinbasepro.service.CoinbaseProAccountService;
 import org.knowm.xchange.coinbasepro.service.CoinbaseProMarketDataService;
 import org.knowm.xchange.coinbasepro.service.CoinbaseProTradeService;
@@ -20,11 +19,8 @@ import org.slf4j.LoggerFactory;
 import services.MetadataAggregator;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
 
-import static constants.Exchange.BITFINEX;
 import static constants.Exchange.COINBASE_PRO;
 
 
@@ -74,7 +70,6 @@ public class CoinbaseProExchangeRestAPI {
     }
 
     public void refreshProducts() throws IOException {
-        exchange.remoteInit();
         metadataMap = exchange.getExchangeMetaData().getCurrencyPairs(); //NOTE: trading fees are not correct
         metadataAggregator.upsertMetadata(COINBASE_PRO, metadataMap);
     }

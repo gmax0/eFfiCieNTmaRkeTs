@@ -2,6 +2,9 @@ import buffer.OrderBookBuffer;
 import buffer.TradeBuffer;
 import config.Configuration;
 import config.CustomConversionHandler;
+import info.bitrich.xchangestream.core.StreamingExchange;
+import info.bitrich.xchangestream.core.StreamingExchangeFactory;
+import info.bitrich.xchangestream.kraken.KrakenStreamingExchange;
 import org.apache.commons.configuration2.YAMLConfiguration;
 import org.knowm.xchange.currency.CurrencyPair;
 import org.knowm.xchange.dto.marketdata.OrderBook;
@@ -15,11 +18,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rest.BitfinexExchangeRestAPI;
 import rest.CoinbaseProExchangeRestAPI;
+import rest.KrakenExchangeRestAPI;
 import services.Bookkeeper;
 import services.MetadataAggregator;
 import services.OscillationArbitrager;
 import streams.BitfinexExchangeStream;
 import streams.CoinbaseProExchangeStream;
+import streams.KrakenExchangeStream;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -59,6 +64,13 @@ public class Application {
                         .currencyPairs(yamlConfiguration.getList(CurrencyPair.class, "exchange.bitfinex.websocket.currency_pairs"))
                         .depth(yamlConfiguration.getInt("exchange.bitfinex.websocket.depth"))
                         .build())
+                .krakenConfig(Configuration.KrakenConfig.builder()
+                        .enabled(yamlConfiguration.getBoolean("exchange.kraken.enabled"))
+                        .apiKey(yamlConfiguration.getString("exchange.kraken.api.credentials.api_key"))
+                        .secretKey(yamlConfiguration.getString("exchange.kraken.api.credentials.secret_key"))
+                        .currencyPairs(yamlConfiguration.getList(CurrencyPair.class, "exchange.kraken.websocket.currency_pairs"))
+                        .depth(yamlConfiguration.getInt("exchange.kraken.websocket.depth"))
+                        .build())
                 .build();
 
         LOG.info(Boolean.toString(config.getCoinbaseProConfig().isEnabled()));
@@ -80,6 +92,7 @@ public class Application {
         //Setup Publishers
         CoinbaseProExchangeRestAPI coinbaseProExchangeRestAPI = new CoinbaseProExchangeRestAPI(config, metadataAggregator);
         BitfinexExchangeRestAPI bitfinexExchangeRestAPI = new BitfinexExchangeRestAPI(config, metadataAggregator);
+        KrakenExchangeRestAPI krakenExchangeRestAPI = new KrakenExchangeRestAPI(config, metadataAggregator);
 
         //Setup ThreadExecutors
         /*
@@ -104,12 +117,12 @@ public class Application {
          */
 //        scheduledExecutorService.shutdown();
 
-
+        KrakenExchangeStream krakenExchangeStream = new KrakenExchangeStream(config, orderBookBuffer);
+        krakenExchangeStream.start();
         CoinbaseProExchangeStream coinbaseProExchangeStream = new CoinbaseProExchangeStream(config, orderBookBuffer);
         coinbaseProExchangeStream.start();
         BitfinexExchangeStream bitfinexExchangeStream = new BitfinexExchangeStream(config, orderBookBuffer);
         bitfinexExchangeStream.start();
-
         Thread.sleep(2000);
 
 

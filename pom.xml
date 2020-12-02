@@ -38,17 +38,17 @@
         <dependency>
             <groupId>org.knowm.xchange</groupId>
             <artifactId>xchange-stream-coinbasepro</artifactId>
-            <version>5.0.3</version>
+            <version>5.0.4</version>
         </dependency>
         <dependency>
             <groupId>org.knowm.xchange</groupId>
             <artifactId>xchange-stream-kraken</artifactId>
-            <version>5.0.3</version>
+            <version>5.0.4</version>
         </dependency>
         <dependency>
             <groupId>org.knowm.xchange</groupId>
             <artifactId>xchange-stream-bitfinex</artifactId>
-            <version>5.0.3</version>
+            <version>5.0.4</version>
         </dependency>
 
         <!-- Interthread Communication -->

@@ -95,7 +95,7 @@ public class OscillationArbitrager implements EventHandler<OrderBookEvent> {
 
         //Not enough exchanges to analyze price deviations
         if (orderBooks.get(currencyPair).size() <= 1) {
-            LOG.info("Currency Pair: {} does not possess the minimum number of exchanges to perform oscillation arbitrage analysis", currencyPair);
+            LOG.debug("Currency Pair: {} does not possess the minimum number of exchanges to perform oscillation arbitrage analysis", currencyPair);
         } else {
             //Point to the OrderBook with the lowest ask/bid
             Iterator ascendingIterator = orderBooks.get(currencyPair).iterator();
@@ -122,14 +122,14 @@ public class OscillationArbitrager implements EventHandler<OrderBookEvent> {
                     LOG.info("Arbitrage Opportunity Detected! Buy on {} at {}, Sell on {} at {}",
                             ex1, ex1LowestAsk, ex2, ex2HighestBid);
                 } else {
-                    LOG.info("Nope.");
+                    LOG.debug("Nope.");
                     break;
                 }
             }
         }
 
         stopWatch.suspend();
-        LOG.info("OscillationArbitrager Execution Time (nanoseconds): {}", Long.toString(stopWatch.getNanoTime()));
+        LOG.debug("OscillationArbitrager Execution Time (nanoseconds): {}", Long.toString(stopWatch.getNanoTime()));
         stopWatch.reset();
     }
 }
