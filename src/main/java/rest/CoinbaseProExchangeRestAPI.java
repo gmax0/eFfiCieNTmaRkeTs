@@ -54,11 +54,6 @@ public class CoinbaseProExchangeRestAPI {
 
             this.metadataAggregator = metadataAggregator;
 
-            /*
-            for (CoinbaseProProduct product : marketDataService.getCoinbaseProProducts()) {
-                LOG.info(product.toString());
-            }
-             */
 
             //Cache initial calls
             refreshProducts();

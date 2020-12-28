@@ -3,7 +3,8 @@ package constants;
 public enum Exchange {
     COINBASE_PRO("CoinbasePro"),
     KRAKEN("Kraken"),
-    BITFINEX("Bitfinex");
+    BITFINEX("Bitfinex"),
+    GEMINI("Gemini");
 
     private String str;
     Exchange(String str) {
