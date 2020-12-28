@@ -21,7 +21,6 @@ import services.MetadataAggregator;
 import java.io.IOException;
 import java.util.Map;
 
-import static constants.Exchange.COINBASE_PRO;
 import static constants.Exchange.GEMINI;
 
 public class GeminiExchangeRestAPI {
@@ -43,9 +42,8 @@ public class GeminiExchangeRestAPI {
                                       MetadataAggregator metadataAggregator) throws IOException {
         if (cfg.getGeminiConfig().isEnabled()) {
             ExchangeSpecification exSpec = new GeminiExchange().getDefaultExchangeSpecification();
-            exSpec.setSecretKey(cfg.getGeminiConfig().getSecretKey());
             exSpec.setApiKey(cfg.getGeminiConfig().getApiKey());
-            exSpec.setExchangeSpecificParametersItem("passphrase", cfg.getGeminiConfig().getPassphrase());
+            exSpec.setSecretKey(cfg.getGeminiConfig().getSecretKey());
 
             exchange = ExchangeFactory.INSTANCE.createExchange(exSpec);
             accountService = (GeminiAccountService)exchange.getAccountService();
