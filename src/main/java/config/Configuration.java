@@ -16,6 +16,7 @@ public class Configuration {
     private CoinbaseProConfig coinbaseProConfig;
     private KrakenConfig krakenConfig;
     private BitfinexConfig bitfinexConfig;
+    private GeminiConfig geminiConfig;
 
     @Builder
     @Getter
@@ -46,5 +47,9 @@ public class Configuration {
 
     @SuperBuilder
     public static class BitfinexConfig extends ExchangeConfig {
+    }
+
+    @SuperBuilder
+    public static class GeminiConfig extends ExchangeConfig {
     }
 }

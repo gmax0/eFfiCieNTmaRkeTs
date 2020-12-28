@@ -50,6 +50,11 @@
             <artifactId>xchange-stream-bitfinex</artifactId>
             <version>5.0.4</version>
         </dependency>
+        <dependency>
+            <groupId>org.knowm.xchange</groupId>
+            <artifactId>xchange-stream-gemini</artifactId>
+            <version>5.0.4</version>
+        </dependency>
 
         <!-- Interthread Communication -->
         <dependency>

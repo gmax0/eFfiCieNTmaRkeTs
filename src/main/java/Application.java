@@ -18,12 +18,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rest.BitfinexExchangeRestAPI;
 import rest.CoinbaseProExchangeRestAPI;
+import rest.GeminiExchangeRestAPI;
 import rest.KrakenExchangeRestAPI;
 import services.Bookkeeper;
 import services.MetadataAggregator;
 import services.OscillationArbitrager;
 import streams.BitfinexExchangeStream;
 import streams.CoinbaseProExchangeStream;
+import streams.GeminiExchangeStream;
 import streams.KrakenExchangeStream;
 
 import java.math.BigDecimal;
@@ -32,6 +34,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static constants.Exchange.BITFINEX;
+import static constants.Exchange.GEMINI;
 
 public class Application {
     public static Logger LOG = LoggerFactory.getLogger(Application.class);
@@ -71,6 +74,13 @@ public class Application {
                         .currencyPairs(yamlConfiguration.getList(CurrencyPair.class, "exchange.kraken.websocket.currency_pairs"))
                         .depth(yamlConfiguration.getInt("exchange.kraken.websocket.depth"))
                         .build())
+                .geminiConfig(Configuration.GeminiConfig.builder()
+                        .enabled(yamlConfiguration.getBoolean("exchange.gemini.enabled"))
+                        .apiKey(yamlConfiguration.getString("exchange.gemini.api.credentials.api_key"))
+                        .secretKey(yamlConfiguration.getString("exchange.gemini.api.credentials.secret_key"))
+                        .currencyPairs(yamlConfiguration.getList(CurrencyPair.class, "exchange.gemini.websocket.currency_pairs"))
+                        .depth(yamlConfiguration.getInt("exchange.gemini.websocket.depth"))
+                        .build())
                 .build();
 
         LOG.info(Boolean.toString(config.getCoinbaseProConfig().isEnabled()));
@@ -90,9 +100,10 @@ public class Application {
         orderBookBuffer.start();
 
         //Setup Publishers
+        GeminiExchangeRestAPI geminiExchangeRestAPI = new GeminiExchangeRestAPI(config, metadataAggregator);
         CoinbaseProExchangeRestAPI coinbaseProExchangeRestAPI = new CoinbaseProExchangeRestAPI(config, metadataAggregator);
-        BitfinexExchangeRestAPI bitfinexExchangeRestAPI = new BitfinexExchangeRestAPI(config, metadataAggregator);
-        KrakenExchangeRestAPI krakenExchangeRestAPI = new KrakenExchangeRestAPI(config, metadataAggregator);
+        //BitfinexExchangeRestAPI bitfinexExchangeRestAPI = new BitfinexExchangeRestAPI(config, metadataAggregator);
+        //KrakenExchangeRestAPI krakenExchangeRestAPI = new KrakenExchangeRestAPI(config, metadataAggregator);
 
         //Setup ThreadExecutors
         /*
@@ -117,12 +128,14 @@ public class Application {
          */
 //        scheduledExecutorService.shutdown();
 
-        KrakenExchangeStream krakenExchangeStream = new KrakenExchangeStream(config, orderBookBuffer);
-        krakenExchangeStream.start();
-        CoinbaseProExchangeStream coinbaseProExchangeStream = new CoinbaseProExchangeStream(config, orderBookBuffer);
-        coinbaseProExchangeStream.start();
-        BitfinexExchangeStream bitfinexExchangeStream = new BitfinexExchangeStream(config, orderBookBuffer);
-        bitfinexExchangeStream.start();
+        GeminiExchangeStream geminiExchangeStream = new GeminiExchangeStream(config, orderBookBuffer);
+        geminiExchangeStream.start();
+//        KrakenExchangeStream krakenExchangeStream = new KrakenExchangeStream(config, orderBookBuffer);
+//        krakenExchangeStream.start();
+//        CoinbaseProExchangeStream coinbaseProExchangeStream = new CoinbaseProExchangeStream(config, orderBookBuffer);
+//        coinbaseProExchangeStream.start();
+//        BitfinexExchangeStream bitfinexExchangeStream = new BitfinexExchangeStream(config, orderBookBuffer);
+//        bitfinexExchangeStream.start();
         Thread.sleep(2000);
 
 
@@ -130,7 +143,7 @@ public class Application {
         XYChart chart = new XYChartBuilder().width(800).height(600).title("CoinbasePro Order Book").xAxisTitle("USD").yAxisTitle("BTC").build();
         chart.getStyler().setDefaultSeriesRenderStyle(XYSeries.XYSeriesRenderStyle.Area);
 
-        OrderBook orderBook = bookkeeper.getOrderBook(BITFINEX, CurrencyPair.BTC_USD);
+        OrderBook orderBook = bookkeeper.getOrderBook(GEMINI, CurrencyPair.BTC_USD);
         // BIDS
         List<Number> xData = new ArrayList<>();
         List<Number> yData = new ArrayList<>();
@@ -168,7 +181,7 @@ public class Application {
             javax.swing.SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
-                    OrderBook orderBook = bookkeeper.getOrderBook(BITFINEX, CurrencyPair.BTC_USD);
+                    OrderBook orderBook = bookkeeper.getOrderBook(GEMINI, CurrencyPair.BTC_USD);
                     // BIDS
                     List<Number> xData = new ArrayList<>();
                     List<Number> yData = new ArrayList<>();

@@ -45,3 +45,15 @@ exchange:
       credentials:
         api_key: "${env:BITFINEX_API_KEY}"
         secret_key: "${env:BITFINEX_SECRET_KEY}"
+  gemini:
+    enabled: true
+    websocket:
+      depth: 10
+      currency_pairs:
+        - "BTC_USD"
+    api:
+      refresh_rate: 1
+      credentials:
+        api_key: "${env:GEMINI_API_KEY}"
+        secret_key: "${env:GEMINI_SECRET_KEY}"
+
