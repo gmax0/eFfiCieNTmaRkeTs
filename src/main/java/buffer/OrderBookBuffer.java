@@ -42,7 +42,6 @@ public class OrderBookBuffer {
         disruptor.setDefaultExceptionHandler(new ExceptionHandler<>());
 
         this.ringBuffer = disruptor.getRingBuffer();
-
     }
 
     public void insert(OrderBook orderBook, Exchange exchange, CurrencyPair currencyPair) {

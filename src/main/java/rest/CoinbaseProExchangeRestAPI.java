@@ -14,6 +14,7 @@ import org.knowm.xchange.dto.account.AccountInfo;
 import org.knowm.xchange.dto.account.Balance;
 import org.knowm.xchange.dto.account.Fee;
 import org.knowm.xchange.dto.meta.CurrencyPairMetaData;
+import org.knowm.xchange.service.trade.params.orders.OpenOrdersParams;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import services.MetadataAggregator;
@@ -32,12 +33,19 @@ public class CoinbaseProExchangeRestAPI {
     private CoinbaseProTradeService tradeService;
     private CoinbaseProMarketDataService marketDataService;
 
-    private MetadataAggregator metadataAggregator;
+    MetadataAggregator metadataAggregator;
 
     //Cached Info
     Map<CurrencyPair, CurrencyPairMetaData> metadataMap;
     Map<CurrencyPair, Fee> feeMap;
     AccountInfo accountInfo;
+
+    private OpenOrdersParams openOrdersParamsAll;
+
+    /**
+     * Default Constructor for unit-testing
+     */
+    public CoinbaseProExchangeRestAPI() { }
 
     public CoinbaseProExchangeRestAPI(Configuration cfg,
                                       MetadataAggregator metadataAggregator) throws IOException {
@@ -47,13 +55,14 @@ public class CoinbaseProExchangeRestAPI {
             exSpec.setApiKey(cfg.getCoinbaseProConfig().getApiKey());
             exSpec.setExchangeSpecificParametersItem("passphrase", cfg.getCoinbaseProConfig().getPassphrase());
 
+            this.metadataAggregator = metadataAggregator;
+
             exchange = ExchangeFactory.INSTANCE.createExchange(exSpec);
             accountService = (CoinbaseProAccountService)exchange.getAccountService();
             tradeService = (CoinbaseProTradeService)exchange.getTradeService();
             marketDataService = (CoinbaseProMarketDataService)exchange.getMarketDataService();
 
-            this.metadataAggregator = metadataAggregator;
-
+            openOrdersParamsAll = tradeService.createOpenOrdersParams();
 
             //Cache initial calls
             refreshProducts();
@@ -64,9 +73,11 @@ public class CoinbaseProExchangeRestAPI {
         }
     }
 
-    public void refreshProducts() throws IOException {
+    public void refreshProducts() {
         metadataMap = exchange.getExchangeMetaData().getCurrencyPairs(); //NOTE: trading fees are not correct
-        metadataAggregator.upsertMetadata(COINBASE_PRO, metadataMap);
+        if (metadataAggregator.getCurrencyPairMetaDataMap(COINBASE_PRO) == null) {
+            metadataAggregator.upsertMetadata(COINBASE_PRO, metadataMap);
+        }
     }
 
     public void refreshFees() throws IOException {
@@ -86,4 +97,15 @@ public class CoinbaseProExchangeRestAPI {
     public Balance getBalance(Currency currency) throws Exception {
         return accountInfo.getWallet().getBalance(currency);
     }
+
+    /*
+    public void submitBuyLimitOrder() throws Exception {
+        return tradeService.placeLimitOrder(new LimitOrder());
+    }
+
+    public void submitSellLimitOrder() {
+
+    }
+
+     */
 }

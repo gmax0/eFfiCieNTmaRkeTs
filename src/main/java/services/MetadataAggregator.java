@@ -30,12 +30,14 @@ public class MetadataAggregator {
     public BigDecimal getTakerFee(Exchange exchange, CurrencyPair currencyPair) {
         return aggregatedFee.get(exchange).get(currencyPair).getTakerFee();
     }
-
     public void upsertMetadata(Exchange exchange, Map<CurrencyPair, CurrencyPairMetaData> metadataMap) {
         aggregatedMetadata.put(exchange, metadataMap);
     }
-
     public void upsertAccountInfo(Exchange exchange, AccountInfo accountInfo) {
         aggregatedAccountInfo.put(exchange, accountInfo);
+    }
+
+    public Map<CurrencyPair, CurrencyPairMetaData> getCurrencyPairMetaDataMap(Exchange exchange) {
+        return aggregatedMetadata.get(exchange);
     }
 }

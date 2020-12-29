@@ -16,6 +16,9 @@ import java.math.RoundingMode;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ *
+ */
 public class OscillationArbitrager implements EventHandler<OrderBookEvent> {
 
     private static final Logger LOG = LoggerFactory.getLogger(OscillationArbitrager.class);
@@ -93,39 +96,43 @@ public class OscillationArbitrager implements EventHandler<OrderBookEvent> {
             stopWatch.resume();
         }
 
-        //Not enough exchanges to analyze price deviations
-        if (orderBooks.get(currencyPair).size() <= 1) {
-            LOG.debug("Currency Pair: {} does not possess the minimum number of exchanges to perform oscillation arbitrage analysis", currencyPair);
-        } else {
-            //Point to the OrderBook with the lowest ask/bid
-            Iterator ascendingIterator = orderBooks.get(currencyPair).iterator();
-            //Point to the OrderBook with the highest ask/bid
-            Iterator descendingIterator = orderBooks.get(currencyPair).descendingIterator();
+        try {
+            //Not enough exchanges to analyze price deviations
+            if (orderBooks.get(currencyPair).size() <= 1) {
+                LOG.debug("Currency Pair: {} does not possess the minimum number of exchanges to perform oscillation arbitrage analysis", currencyPair);
+            } else {
+                //Point to the OrderBook with the lowest ask/bid
+                Iterator ascendingIterator = orderBooks.get(currencyPair).iterator();
+                //Point to the OrderBook with the highest ask/bid
+                Iterator descendingIterator = orderBooks.get(currencyPair).descendingIterator();
 
-            //For now, use whichever fee (maker or taker) is greatest as the effective fee
-            while (ascendingIterator.hasNext() && descendingIterator.hasNext()) {
-                Entry<Exchange, OrderBook> ex1 = (Entry) ascendingIterator.next();
-                BigDecimal ex1MakerFee = metadataAggregator.getMakerFee(ex1.key, currencyPair);
-                BigDecimal ex1TakerFee = metadataAggregator.getTakerFee(ex1.key, currencyPair);
-                BigDecimal ex1LowestAsk = ex1.value.getAsks().get(0).getLimitPrice();
+                //For now, use whichever fee (maker or taker) is greatest as the effective fee
+                while (ascendingIterator.hasNext() && descendingIterator.hasNext()) {
+                    Entry<Exchange, OrderBook> ex1 = (Entry) ascendingIterator.next();
+                    BigDecimal ex1MakerFee = metadataAggregator.getMakerFee(ex1.key, currencyPair);
+                    BigDecimal ex1TakerFee = metadataAggregator.getTakerFee(ex1.key, currencyPair);
+                    BigDecimal ex1LowestAsk = ex1.value.getAsks().get(0).getLimitPrice();
 
-                Entry<Exchange, OrderBook> ex2 = (Entry) descendingIterator.next();
-                BigDecimal ex2MakerFee = metadataAggregator.getMakerFee(ex2.key, currencyPair);
-                BigDecimal ex2TakerFee = metadataAggregator.getTakerFee(ex2.key, currencyPair);
-                BigDecimal ex2HighestBid = ex2.value.getBids().get(0).getLimitPrice();
+                    Entry<Exchange, OrderBook> ex2 = (Entry) descendingIterator.next();
+                    BigDecimal ex2MakerFee = metadataAggregator.getMakerFee(ex2.key, currencyPair);
+                    BigDecimal ex2TakerFee = metadataAggregator.getTakerFee(ex2.key, currencyPair);
+                    BigDecimal ex2HighestBid = ex2.value.getBids().get(0).getLimitPrice();
 
-                BigDecimal netBuyAmount = ex1LowestAsk.multiply(BigDecimal.ONE.subtract(ex1TakerFee));
-                BigDecimal netSellAmount = ex2HighestBid.multiply(BigDecimal.ONE.subtract(ex2TakerFee));
+                    BigDecimal netBuyAmount = ex1LowestAsk.multiply(BigDecimal.ONE.subtract(ex1TakerFee));
+                    BigDecimal netSellAmount = ex2HighestBid.multiply(BigDecimal.ONE.subtract(ex2TakerFee));
 
-                if (netBuyAmount.compareTo(netSellAmount) > 0
-                        && netSellAmount.subtract(netBuyAmount).divide(netBuyAmount, 5, RoundingMode.HALF_EVEN).compareTo(minGain) >= 0) {
-                    LOG.info("Arbitrage Opportunity Detected! Buy on {} at {}, Sell on {} at {}",
-                            ex1, ex1LowestAsk, ex2, ex2HighestBid);
-                } else {
-                    LOG.debug("Nope.");
-                    break;
+                    if (netBuyAmount.compareTo(netSellAmount) > 0
+                            && netSellAmount.subtract(netBuyAmount).divide(netBuyAmount, 5, RoundingMode.HALF_EVEN).compareTo(minGain) >= 0) {
+                        LOG.info("Arbitrage Opportunity Detected! Buy on {} at {}, Sell on {} at {}",
+                                ex1, ex1LowestAsk, ex2, ex2HighestBid);
+                    } else {
+                        LOG.debug("Nope.");
+                        break;
+                    }
                 }
             }
+        } catch (Exception e) {
+
         }
 
         stopWatch.suspend();

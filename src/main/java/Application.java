@@ -93,8 +93,8 @@ public class Application {
         //Setup Services and Buffers
         //TODO: setup a dependency injection framework
         MetadataAggregator metadataAggregator = new MetadataAggregator();
-        TradeBuffer tradeBuffer = new TradeBuffer();
         Bookkeeper bookkeeper = new Bookkeeper();
+        TradeBuffer tradeBuffer = new TradeBuffer();
         OscillationArbitrager oscillationArbitrager = new OscillationArbitrager(config, metadataAggregator, tradeBuffer);
         OrderBookBuffer orderBookBuffer = new OrderBookBuffer(bookkeeper, oscillationArbitrager);
         orderBookBuffer.start();
@@ -132,8 +132,8 @@ public class Application {
         geminiExchangeStream.start();
 //        KrakenExchangeStream krakenExchangeStream = new KrakenExchangeStream(config, orderBookBuffer);
 //        krakenExchangeStream.start();
-//        CoinbaseProExchangeStream coinbaseProExchangeStream = new CoinbaseProExchangeStream(config, orderBookBuffer);
-//        coinbaseProExchangeStream.start();
+        CoinbaseProExchangeStream coinbaseProExchangeStream = new CoinbaseProExchangeStream(config, orderBookBuffer);
+        coinbaseProExchangeStream.start();
 //        BitfinexExchangeStream bitfinexExchangeStream = new BitfinexExchangeStream(config, orderBookBuffer);
 //        bitfinexExchangeStream.start();
         Thread.sleep(2000);
