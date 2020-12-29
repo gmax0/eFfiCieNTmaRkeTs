@@ -73,25 +73,20 @@ public class CoinbaseProExchangeRestAPI {
         }
     }
 
-    public void refreshProducts() {
+    public void refreshProducts() throws IOException {
+        exchange.remoteInit(); //A new reference will be saved in the exchange instance
         metadataMap = exchange.getExchangeMetaData().getCurrencyPairs(); //NOTE: trading fees are not correct
-        if (metadataAggregator.getCurrencyPairMetaDataMap(COINBASE_PRO) == null) {
-            metadataAggregator.upsertMetadata(COINBASE_PRO, metadataMap);
-        }
+        metadataAggregator.upsertMetadata(COINBASE_PRO, metadataMap);
     }
 
     public void refreshFees() throws IOException {
-        feeMap = accountService.getDynamicTradingFees();
+        feeMap = accountService.getDynamicTradingFees(); //A new reference will be returned here
         metadataAggregator.upsertFeeMap(COINBASE_PRO, feeMap);
     }
 
     public void refreshAccountInfo() throws IOException {
-        accountInfo = accountService.getAccountInfo();
+        accountInfo = accountService.getAccountInfo(); //A new reference will be returned here
         metadataAggregator.upsertAccountInfo(COINBASE_PRO, accountInfo);
-    }
-
-    public Map<CurrencyPair, Fee> getFees() throws Exception {
-        return feeMap;
     }
 
     public Balance getBalance(Currency currency) throws Exception {

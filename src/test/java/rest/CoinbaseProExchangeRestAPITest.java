@@ -53,22 +53,30 @@ public class CoinbaseProExchangeRestAPITest {
 
     @Test
     public void refreshProducts_currencyPairMetaDataMap_updatesByRef_onlyCalledOnce() throws Exception {
-        Map<CurrencyPair, CurrencyPairMetaData> currencyPairCurrencyPairMetaDataMap = new HashMap<>();
-        currencyPairCurrencyPairMetaDataMap.put(
-                CurrencyPair.BTC_USD, new CurrencyPairMetaData(null, null, null, 0, null));
-
         when(exchange.getExchangeMetaData()).thenReturn(exchangeMetaData);
-        when(exchangeMetaData.getCurrencyPairs()).thenReturn(currencyPairCurrencyPairMetaDataMap);
 
         //First Refresh Call
+        Map<CurrencyPair, CurrencyPairMetaData> currencyPairCurrencyPairMetaDataMap1 = new HashMap<>();
+        currencyPairCurrencyPairMetaDataMap1.put(
+                CurrencyPair.BTC_USD, new CurrencyPairMetaData(null, null, null, 0, null));
+
+        when(exchangeMetaData.getCurrencyPairs()).thenReturn(currencyPairCurrencyPairMetaDataMap1);
+
         coinbaseProExchangeRestAPI.refreshProducts();
-        currencyPairCurrencyPairMetaDataMap.put(
-                CurrencyPair.ETH_USD, new CurrencyPairMetaData(null, null, null, 0, null));
+        verify(metadataAggregator, times(1)).upsertMetadata(eq(constants.Exchange.COINBASE_PRO), eq(currencyPairCurrencyPairMetaDataMap1));
+        assertEquals(1, metadataAggregator.getCurrencyPairMetaDataMap(constants.Exchange.COINBASE_PRO).size());
 
         //Second Refresh Call
-        coinbaseProExchangeRestAPI.refreshProducts();
+        Map<CurrencyPair, CurrencyPairMetaData> currencyPairCurrencyPairMetaDataMap2 = new HashMap<>();
+        currencyPairCurrencyPairMetaDataMap2.put(
+                CurrencyPair.BTC_USD, new CurrencyPairMetaData(null, null, null, 0, null));
+        currencyPairCurrencyPairMetaDataMap2.put(
+                CurrencyPair.ETH_USD, new CurrencyPairMetaData(null, null, null, 0, null));
 
-        verify(metadataAggregator, times(1)).upsertMetadata(eq(constants.Exchange.COINBASE_PRO), any());
+        when(exchangeMetaData.getCurrencyPairs()).thenReturn(currencyPairCurrencyPairMetaDataMap2);
+
+        coinbaseProExchangeRestAPI.refreshProducts();
+        verify(metadataAggregator, times(1)).upsertMetadata(eq(constants.Exchange.COINBASE_PRO), eq(currencyPairCurrencyPairMetaDataMap2));
         assertEquals(2, metadataAggregator.getCurrencyPairMetaDataMap(constants.Exchange.COINBASE_PRO).size());
     }
 }

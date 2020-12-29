@@ -15,9 +15,9 @@ import java.util.concurrent.ConcurrentHashMap;
 public class MetadataAggregator {
     private static final Logger LOG = LoggerFactory.getLogger(MetadataAggregator.class);
 
-    private Map<Exchange, Map<CurrencyPair, Fee>> aggregatedFee = new ConcurrentHashMap<>();
-    private Map<Exchange, Map<CurrencyPair, CurrencyPairMetaData>> aggregatedMetadata = new ConcurrentHashMap<>();
-    private Map<Exchange, AccountInfo> aggregatedAccountInfo = new ConcurrentHashMap<>();
+    final private Map<Exchange, Map<CurrencyPair, Fee>> aggregatedFee = new ConcurrentHashMap<>();
+    final private Map<Exchange, Map<CurrencyPair, CurrencyPairMetaData>> aggregatedMetadata = new ConcurrentHashMap<>();
+    final private Map<Exchange, AccountInfo> aggregatedAccountInfo = new ConcurrentHashMap<>();
 
     public MetadataAggregator() { }
 
