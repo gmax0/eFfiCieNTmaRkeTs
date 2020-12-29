@@ -23,10 +23,11 @@ import java.util.Map;
 
 import static constants.Exchange.GEMINI;
 
-public class GeminiExchangeRestAPI {
+public class GeminiExchangeRestAPI implements ExchangeRestAPI {
     private static final Logger LOG = LoggerFactory.getLogger(GeminiExchangeRestAPI.class);
 
-    private Exchange exchange;
+    private final constants.Exchange exchangeName = GEMINI;
+    private Exchange exchangeInstance;
     private GeminiAccountService accountService;
     private GeminiTradeService tradeService;
     private GeminiMarketDataService marketDataService;
@@ -45,10 +46,10 @@ public class GeminiExchangeRestAPI {
             exSpec.setApiKey(cfg.getGeminiConfig().getApiKey());
             exSpec.setSecretKey(cfg.getGeminiConfig().getSecretKey());
 
-            exchange = ExchangeFactory.INSTANCE.createExchange(exSpec);
-            accountService = (GeminiAccountService)exchange.getAccountService();
-            tradeService = (GeminiTradeService)exchange.getTradeService();
-            marketDataService = (GeminiMarketDataService)exchange.getMarketDataService();
+            exchangeInstance = ExchangeFactory.INSTANCE.createExchange(exSpec);
+            accountService = (GeminiAccountService)exchangeInstance.getAccountService();
+            tradeService = (GeminiTradeService)exchangeInstance.getTradeService();
+            marketDataService = (GeminiMarketDataService)exchangeInstance.getMarketDataService();
 
             this.metadataAggregator = metadataAggregator;
 
@@ -61,16 +62,24 @@ public class GeminiExchangeRestAPI {
         }
     }
 
+    @Override
+    public constants.Exchange getExchangeName() {
+        return exchangeName;
+    }
+
+    @Override
     public void refreshProducts() throws IOException {
-        metadataMap = exchange.getExchangeMetaData().getCurrencyPairs(); //NOTE: trading fees are not correct
+        metadataMap = exchangeInstance.getExchangeMetaData().getCurrencyPairs(); //NOTE: trading fees are not correct
         metadataAggregator.upsertMetadata(GEMINI, metadataMap);
     }
 
+    @Override
     public void refreshFees() throws IOException {
         feeMap = accountService.getDynamicTradingFees();
         metadataAggregator.upsertFeeMap(GEMINI, feeMap);
     }
 
+    @Override
     public void refreshAccountInfo() throws IOException {
         accountInfo = accountService.getAccountInfo();
         metadataAggregator.upsertAccountInfo(GEMINI, accountInfo);

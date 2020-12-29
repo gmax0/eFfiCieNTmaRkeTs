@@ -23,10 +23,11 @@ import java.util.Map;
 
 import static constants.Exchange.BITFINEX;
 
-public class BitfinexExchangeRestAPI {
+public class BitfinexExchangeRestAPI implements ExchangeRestAPI {
     private static final Logger LOG = LoggerFactory.getLogger(BitfinexExchangeRestAPI.class);
 
-    private Exchange exchange;
+    private final constants.Exchange exchangeName = BITFINEX;
+    private Exchange exchangeInstance;
     private BitfinexAccountService accountService;
     private BitfinexTradeService tradeService;
     private BitfinexMarketDataService marketDataService;
@@ -46,10 +47,10 @@ public class BitfinexExchangeRestAPI {
             exSpec.setSecretKey(cfg.getBitfinexConfig().getSecretKey());
             exSpec.setApiKey(cfg.getBitfinexConfig().getApiKey());
 
-            exchange = ExchangeFactory.INSTANCE.createExchange(exSpec);
-            accountService = (BitfinexAccountService)exchange.getAccountService();
-            tradeService = (BitfinexTradeService)exchange.getTradeService();
-            marketDataService = (BitfinexMarketDataService)exchange.getMarketDataService();
+            exchangeInstance = ExchangeFactory.INSTANCE.createExchange(exSpec);
+            accountService = (BitfinexAccountService)exchangeInstance.getAccountService();
+            tradeService = (BitfinexTradeService)exchangeInstance.getTradeService();
+            marketDataService = (BitfinexMarketDataService)exchangeInstance.getMarketDataService();
 
             this.metadataAggregator = metadataAggregator;
 
@@ -70,16 +71,24 @@ public class BitfinexExchangeRestAPI {
         }
     }
 
+    @Override
+    public constants.Exchange getExchangeName() {
+        return exchangeName;
+    }
+
+    @Override
     public void refreshProducts() throws IOException {
-        metadataMap = exchange.getExchangeMetaData().getCurrencyPairs(); //NOTE: trading fees are not correct
+        metadataMap = exchangeInstance.getExchangeMetaData().getCurrencyPairs(); //NOTE: trading fees are not correct
         metadataAggregator.upsertMetadata(BITFINEX, metadataMap);
     }
 
+    @Override
     public void refreshFees() throws IOException {
         feeMap = accountService.getDynamicTradingFees();
         metadataAggregator.upsertFeeMap(BITFINEX, feeMap);
     }
 
+    @Override
     public void refreshAccountInfo() throws IOException {
         accountInfo = accountService.getAccountInfo();
         metadataAggregator.upsertAccountInfo(BITFINEX, accountInfo);

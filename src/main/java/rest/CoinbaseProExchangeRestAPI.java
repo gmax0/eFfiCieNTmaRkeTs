@@ -24,11 +24,11 @@ import java.util.Map;
 
 import static constants.Exchange.COINBASE_PRO;
 
-
-public class CoinbaseProExchangeRestAPI {
+public class CoinbaseProExchangeRestAPI implements ExchangeRestAPI {
     private static final Logger LOG = LoggerFactory.getLogger(CoinbaseProExchangeRestAPI.class);
 
-    private Exchange exchange;
+    private final constants.Exchange exchangeName = COINBASE_PRO;
+    private Exchange exchangeInstance;
     private CoinbaseProAccountService accountService;
     private CoinbaseProTradeService tradeService;
     private CoinbaseProMarketDataService marketDataService;
@@ -57,10 +57,10 @@ public class CoinbaseProExchangeRestAPI {
 
             this.metadataAggregator = metadataAggregator;
 
-            exchange = ExchangeFactory.INSTANCE.createExchange(exSpec);
-            accountService = (CoinbaseProAccountService)exchange.getAccountService();
-            tradeService = (CoinbaseProTradeService)exchange.getTradeService();
-            marketDataService = (CoinbaseProMarketDataService)exchange.getMarketDataService();
+            exchangeInstance = ExchangeFactory.INSTANCE.createExchange(exSpec);
+            accountService = (CoinbaseProAccountService)exchangeInstance.getAccountService();
+            tradeService = (CoinbaseProTradeService)exchangeInstance.getTradeService();
+            marketDataService = (CoinbaseProMarketDataService)exchangeInstance.getMarketDataService();
 
             openOrdersParamsAll = tradeService.createOpenOrdersParams();
 
@@ -73,17 +73,25 @@ public class CoinbaseProExchangeRestAPI {
         }
     }
 
+    @Override
+    public constants.Exchange getExchangeName() {
+        return exchangeName;
+    }
+
+    @Override
     public void refreshProducts() throws IOException {
-        exchange.remoteInit(); //A new reference will be saved in the exchange instance
-        metadataMap = exchange.getExchangeMetaData().getCurrencyPairs(); //NOTE: trading fees are not correct
+        exchangeInstance.remoteInit(); //A new reference will be saved in the exchangeInstance instance
+        metadataMap = exchangeInstance.getExchangeMetaData().getCurrencyPairs(); //NOTE: trading fees are not correct
         metadataAggregator.upsertMetadata(COINBASE_PRO, metadataMap);
     }
 
+    @Override
     public void refreshFees() throws IOException {
         feeMap = accountService.getDynamicTradingFees(); //A new reference will be returned here
         metadataAggregator.upsertFeeMap(COINBASE_PRO, feeMap);
     }
 
+    @Override
     public void refreshAccountInfo() throws IOException {
         accountInfo = accountService.getAccountInfo(); //A new reference will be returned here
         metadataAggregator.upsertAccountInfo(COINBASE_PRO, accountInfo);
