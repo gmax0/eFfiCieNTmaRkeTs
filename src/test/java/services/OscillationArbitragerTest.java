@@ -15,6 +15,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
+import testUtils.OrderBookProvider;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -29,16 +30,18 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class OscillationArbitragerTest {
 
-    @InjectMocks
-    OscillationArbitrager oscillationArbitrager;
-
-    @Spy Configuration mockConfig = Configuration.builder()
+    @Spy
+    Configuration mockConfig = Configuration.builder()
             .oscillationArbitragerConfig(Configuration.OscillationArbitragerConfig.builder()
                     .minGain(new BigDecimal(.001))
                     .build())
             .build();
-    @Mock MetadataAggregator mockMetadataAggregator;
-    @Mock TradeBuffer tradeBuffer;
+    @Mock
+    MetadataAggregator mockMetadataAggregator;
+    @Mock
+    TradeBuffer tradeBuffer;
+    @InjectMocks
+    OscillationArbitrager oscillationArbitrager;
 
     @Before
     public void setup() {
@@ -61,6 +64,8 @@ public class OscillationArbitragerTest {
         oscillationArbitrager.upsertOrderBook(BITFINEX, BTC_USD, new OrderBook(new Date(), Arrays.asList(ask1), Arrays.asList(bid1)));
         oscillationArbitrager.upsertOrderBook(BITFINEX, BTC_USD, new OrderBook(new Date(), Arrays.asList(ask2), Arrays.asList(bid2)));
         Assert.assertEquals(1, oscillationArbitrager.getOrderBooks(BTC_USD).size());
+
+        OrderBookProvider.getOrderBookFromCSV(BTC_USD, new Date(), "BTC-1-bids.csv", "BTC-1-asks.csv");
     }
 
     @Test

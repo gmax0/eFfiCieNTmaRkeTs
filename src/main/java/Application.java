@@ -78,8 +78,12 @@ public class Application {
         coinbaseProExchangeStream.start();
         BitfinexExchangeStream bitfinexExchangeStream = new BitfinexExchangeStream(config, orderBookBuffer);
         bitfinexExchangeStream.start();
-        Thread.sleep(2000);
 
+        while (true) {
+            Thread.sleep(Long.MAX_VALUE);
+        }
+
+        /*
         //Real-Time Chart Testing
         XYChart chart = new XYChartBuilder().width(800).height(600).title("CoinbasePro Order Book").xAxisTitle("USD").yAxisTitle("BTC").build();
         chart.getStyler().setDefaultSeriesRenderStyle(XYSeries.XYSeriesRenderStyle.Area);

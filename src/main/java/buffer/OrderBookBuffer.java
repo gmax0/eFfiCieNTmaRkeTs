@@ -38,7 +38,7 @@ public class OrderBookBuffer {
                 new SleepingWaitStrategy());
 
 //        disruptor.handleEventsWith(bookkeeper, oscillationArbitrager);
-        disruptor.handleEventsWith(bookkeeper);
+//        disruptor.handleEventsWith(bookkeeper);
         disruptor.handleEventsWith(oscillationArbitrager);
 //        disruptor.handleEventsWith(bookkeeper, bookkeeper);
 //        disruptor.after(bookkeeper);

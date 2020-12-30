@@ -25,7 +25,7 @@ public class OscillationArbitrager implements EventHandler<OrderBookEvent> {
 
     //Sort OrderBooks by the natural order defined for a LimitOrder (ascending)
     private static final Comparator<Map.Entry<Exchange, OrderBook>> comparator = (e1, e2) -> {
-        if (e1.getKey().equals(e2.getKey())) return 0;
+        if (((Exchange)e1.getKey()).name().equals(((Exchange)e2.getKey()).name())) return 0;
         return e1.getValue().getAsks().get(0).compareTo(e2.getValue().getAsks().get(0));
     };
 
@@ -75,12 +75,17 @@ public class OscillationArbitrager implements EventHandler<OrderBookEvent> {
         this.upsertOrderBook(event.exchange, event.currencyPair, event.orderBook);
     }
 
+    //Make sure you unit test this...basically broke the app
     public void upsertOrderBook(Exchange exchange, CurrencyPair currencyPair, OrderBook orderBook) {
         orderBooks.computeIfAbsent(currencyPair, (k) -> {
            return new TreeSet(comparator);
         });
 
-        orderBooks.get(currencyPair).add(new Entry<>(exchange, orderBook));
+        Entry<Exchange, OrderBook> entry = new Entry(exchange, orderBook);
+        if (orderBooks.get(currencyPair).contains(entry)) {
+            orderBooks.get(currencyPair).remove(entry);
+        }
+        orderBooks.get(currencyPair).add(entry);
         computeTrades(currencyPair);
     }
 
@@ -96,39 +101,45 @@ public class OscillationArbitrager implements EventHandler<OrderBookEvent> {
             stopWatch.resume();
         }
 
-        //Not enough exchanges to analyze price deviations
-        if (orderBooks.get(currencyPair).size() <= 1) {
-            LOG.debug("Currency Pair: {} does not possess the minimum number of exchanges to perform oscillation arbitrage analysis", currencyPair);
-        } else {
-            //Point to the OrderBook with the lowest ask/bid
-            Iterator ascendingIterator = orderBooks.get(currencyPair).iterator();
-            //Point to the OrderBook with the highest ask/bid
-            Iterator descendingIterator = orderBooks.get(currencyPair).descendingIterator();
+        try {
+            //Not enough exchanges to analyze price deviations
+            if (orderBooks.get(currencyPair).size() <= 1) {
+                LOG.debug("Currency Pair: {} does not possess the minimum number of exchanges to perform oscillation arbitrage analysis", currencyPair);
+            } else {
+                //Point to the OrderBook with the lowest ask/bid
+                Iterator ascendingIterator = orderBooks.get(currencyPair).iterator();
+                //Point to the OrderBook with the highest ask/bid
+                Iterator descendingIterator = orderBooks.get(currencyPair).descendingIterator();
 
-            //For now, use whichever fee (maker or taker) is greatest as the effective fee
-            while (ascendingIterator.hasNext() && descendingIterator.hasNext()) {
-                Entry<Exchange, OrderBook> ex1 = (Entry) ascendingIterator.next();
-                BigDecimal ex1MakerFee = metadataAggregator.getMakerFee(ex1.key, currencyPair);
-                BigDecimal ex1TakerFee = metadataAggregator.getTakerFee(ex1.key, currencyPair);
-                BigDecimal ex1LowestAsk = ex1.value.getAsks().get(0).getLimitPrice();
+                //For now, use whichever fee (maker or taker) is greatest as the effective fee
+                while (ascendingIterator.hasNext() && descendingIterator.hasNext()) {
+                    Entry<Exchange, OrderBook> ex1 = (Entry) ascendingIterator.next();
+                    BigDecimal ex1MakerFee = metadataAggregator.getMakerFee(ex1.key, currencyPair);
+                    BigDecimal ex1TakerFee = metadataAggregator.getTakerFee(ex1.key, currencyPair);
+                    BigDecimal ex1LowestAsk = ex1.value.getAsks().get(0).getLimitPrice();
 
-                Entry<Exchange, OrderBook> ex2 = (Entry) descendingIterator.next();
-                BigDecimal ex2MakerFee = metadataAggregator.getMakerFee(ex2.key, currencyPair);
-                BigDecimal ex2TakerFee = metadataAggregator.getTakerFee(ex2.key, currencyPair);
-                BigDecimal ex2HighestBid = ex2.value.getBids().get(0).getLimitPrice();
+                    Entry<Exchange, OrderBook> ex2 = (Entry) descendingIterator.next();
+                    BigDecimal ex2MakerFee = metadataAggregator.getMakerFee(ex2.key, currencyPair);
+                    BigDecimal ex2TakerFee = metadataAggregator.getTakerFee(ex2.key, currencyPair);
+                    BigDecimal ex2HighestBid = ex2.value.getBids().get(0).getLimitPrice();
 
-                BigDecimal netBuyAmount = ex1LowestAsk.multiply(BigDecimal.ONE.subtract(ex1TakerFee));
-                BigDecimal netSellAmount = ex2HighestBid.multiply(BigDecimal.ONE.subtract(ex2TakerFee));
+                    BigDecimal netBuyAmount = ex1LowestAsk.multiply(BigDecimal.ONE.subtract(ex1TakerFee));
+                    BigDecimal netSellAmount = ex2HighestBid.multiply(BigDecimal.ONE.subtract(ex2TakerFee));
 
-                if (netBuyAmount.compareTo(netSellAmount) > 0
-                        && netSellAmount.subtract(netBuyAmount).divide(netBuyAmount, 5, RoundingMode.HALF_EVEN).compareTo(minGain) >= 0) {
-                    LOG.info("Arbitrage Opportunity Detected! Buy on {} at {}, Sell on {} at {}",
-                            ex1, ex1LowestAsk, ex2, ex2HighestBid);
-                } else {
-                    LOG.debug("Nope.");
-                    break;
+                    if (netSellAmount.compareTo(netBuyAmount) > 0
+                            && netSellAmount.subtract(netBuyAmount).divide(netBuyAmount, 5, RoundingMode.HALF_EVEN).compareTo(minGain) >= 0) {
+                        LOG.info("Arbitrage Opportunity Detected! Buy on {} at {}, Sell on {} at {}",
+                                ex1.key, ex1LowestAsk, ex2.key, ex2HighestBid);
+                        LOG.info("With fees calculated, Buy Net Amount: {}, Sell Net Amount: {}",
+                                netBuyAmount, netSellAmount);
+                    } else {
+                        LOG.debug("Nope.");
+                        break;
+                    }
                 }
             }
+        } catch (Exception e) {
+            LOG.error("Exception caught while performing computation for {}", currencyPair, e);
         }
 
         stopWatch.suspend();

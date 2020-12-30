@@ -4,7 +4,8 @@ strategies:
     enabled: false
   oscillation:
     enabled: false
-    min_gain: .002
+    min_gain: .005
+  #  min_gain: .002
 
 exchange:
   coinbase_pro:
