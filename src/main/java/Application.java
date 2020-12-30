@@ -1,12 +1,4 @@
 import buffer.OrderBookBuffer;
-import buffer.TradeBuffer;
-import config.Configuration;
-import config.ConfigurationManager;
-import config.CustomConversionHandler;
-import info.bitrich.xchangestream.core.StreamingExchange;
-import info.bitrich.xchangestream.core.StreamingExchangeFactory;
-import info.bitrich.xchangestream.kraken.KrakenStreamingExchange;
-import org.apache.commons.configuration2.YAMLConfiguration;
 import org.knowm.xchange.currency.CurrencyPair;
 import org.knowm.xchange.dto.marketdata.OrderBook;
 import org.knowm.xchange.dto.trade.LimitOrder;
@@ -15,6 +7,14 @@ import org.knowm.xchart.XYChart;
 import org.knowm.xchart.XYChartBuilder;
 import org.knowm.xchart.XYSeries;
 import org.knowm.xchart.style.markers.SeriesMarkers;
+import streams.BitfinexExchangeStream;
+import streams.CoinbaseProExchangeStream;
+import streams.GeminiExchangeStream;
+import streams.KrakenExchangeStream;
+import util.ThreadFactory;
+import buffer.TradeBuffer;
+import config.Configuration;
+import config.ConfigurationManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rest.BitfinexExchangeRestAPI;
@@ -25,10 +25,6 @@ import rest.task.RestAPIRefreshTask;
 import services.Bookkeeper;
 import services.MetadataAggregator;
 import services.OscillationArbitrager;
-import streams.BitfinexExchangeStream;
-import streams.CoinbaseProExchangeStream;
-import streams.GeminiExchangeStream;
-import streams.KrakenExchangeStream;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -38,7 +34,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import static constants.Exchange.BITFINEX;
 import static constants.Exchange.GEMINI;
 
 public class Application {
@@ -48,13 +43,6 @@ public class Application {
         //Setup Configs
         ConfigurationManager configurationManager = new ConfigurationManager(Application.class.getResourceAsStream("config.yaml"));
         Configuration config = configurationManager.getConfig();
-
-        LOG.info(Boolean.toString(config.getCoinbaseProConfig().isEnabled()));
-        LOG.info(config.getCoinbaseProConfig().getApiKey());
-        LOG.info(config.getCoinbaseProConfig().getSecretKey());
-        LOG.info(config.getCoinbaseProConfig().getPassphrase());
-        LOG.info(config.getCoinbaseProConfig().getCurrencyPairs().toString());
-        LOG.info(config.getBitfinexConfig().getApiKey());
 
         //Setup Services
         //TODO: setup a dependency injection framework
@@ -68,34 +56,30 @@ public class Application {
         tradeBuffer.start();
         orderBookBuffer.start();
 
-        //Setup Publishers
+        //Setup ExchangeRestAPIs
         GeminiExchangeRestAPI geminiExchangeRestAPI = new GeminiExchangeRestAPI(config, metadataAggregator);
         CoinbaseProExchangeRestAPI coinbaseProExchangeRestAPI = new CoinbaseProExchangeRestAPI(config, metadataAggregator);
         BitfinexExchangeRestAPI bitfinexExchangeRestAPI = new BitfinexExchangeRestAPI(config, metadataAggregator);
         KrakenExchangeRestAPI krakenExchangeRestAPI = new KrakenExchangeRestAPI(config, metadataAggregator);
 
-        //Setup ThreadExecutors
-        ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
+        //Setup Refresh Tasks
+        ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1, new ThreadFactory("API-Refresher"));
         scheduledExecutorService.scheduleAtFixedRate(new RestAPIRefreshTask(geminiExchangeRestAPI), 0, config.getGeminiConfig().getRefreshRate(), TimeUnit.SECONDS);
         scheduledExecutorService.scheduleAtFixedRate(new RestAPIRefreshTask(coinbaseProExchangeRestAPI), 0, config.getCoinbaseProConfig().getRefreshRate(), TimeUnit.SECONDS);
         scheduledExecutorService.scheduleAtFixedRate(new RestAPIRefreshTask(bitfinexExchangeRestAPI), 0, config.getBitfinexConfig().getRefreshRate(), TimeUnit.SECONDS);
         scheduledExecutorService.scheduleAtFixedRate(new RestAPIRefreshTask(krakenExchangeRestAPI), 0, config.getKrakenConfig().getRefreshRate(), TimeUnit.SECONDS);
 
-        Thread.sleep(100000);
-        scheduledExecutorService.shutdown();
-
-        //GeminiExchangeStream geminiExchangeStream = new GeminiExchangeStream(config, orderBookBuffer);
-        //geminiExchangeStream.start();
-//        KrakenExchangeStream krakenExchangeStream = new KrakenExchangeStream(config, orderBookBuffer);
-//        krakenExchangeStream.start();
-        //CoinbaseProExchangeStream coinbaseProExchangeStream = new CoinbaseProExchangeStream(config, orderBookBuffer);
-        //coinbaseProExchangeStream.start();
-//        BitfinexExchangeStream bitfinexExchangeStream = new BitfinexExchangeStream(config, orderBookBuffer);
-//        bitfinexExchangeStream.start();
+        //Setup WebSocket Streams
+        GeminiExchangeStream geminiExchangeStream = new GeminiExchangeStream(config, orderBookBuffer);
+        geminiExchangeStream.start();
+        KrakenExchangeStream krakenExchangeStream = new KrakenExchangeStream(config, orderBookBuffer);
+        krakenExchangeStream.start();
+        CoinbaseProExchangeStream coinbaseProExchangeStream = new CoinbaseProExchangeStream(config, orderBookBuffer);
+        coinbaseProExchangeStream.start();
+        BitfinexExchangeStream bitfinexExchangeStream = new BitfinexExchangeStream(config, orderBookBuffer);
+        bitfinexExchangeStream.start();
         Thread.sleep(2000);
 
-
-        /*
         //Real-Time Chart Testing
         XYChart chart = new XYChartBuilder().width(800).height(600).title("CoinbasePro Order Book").xAxisTitle("USD").yAxisTitle("BTC").build();
         chart.getStyler().setDefaultSeriesRenderStyle(XYSeries.XYSeriesRenderStyle.Area);
@@ -173,9 +157,9 @@ public class Application {
                 }
             });
         }
-        */
         /*
         bookkeeper.shutdown();
+        scheduledExecutorService.shutdown();
         LOG.info("END");
 
          */

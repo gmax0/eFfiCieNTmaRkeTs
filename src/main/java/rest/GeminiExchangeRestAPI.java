@@ -69,6 +69,7 @@ public class GeminiExchangeRestAPI implements ExchangeRestAPI {
 
     @Override
     public void refreshProducts() throws IOException {
+        exchangeInstance.remoteInit();
         metadataMap = exchangeInstance.getExchangeMetaData().getCurrencyPairs(); //NOTE: trading fees are not correct
         metadataAggregator.upsertMetadata(GEMINI, metadataMap);
     }

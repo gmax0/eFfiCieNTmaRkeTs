@@ -19,20 +19,36 @@ public class MetadataAggregator {
     final private Map<Exchange, Map<CurrencyPair, CurrencyPairMetaData>> aggregatedMetadata = new ConcurrentHashMap<>();
     final private Map<Exchange, AccountInfo> aggregatedAccountInfo = new ConcurrentHashMap<>();
 
-    public MetadataAggregator() { }
+    public MetadataAggregator() {
+        LOG.info("Instantiated MetadataAggregator.");
+    }
 
     public void upsertFeeMap(Exchange exchange, Map<CurrencyPair, Fee> feeMap) {
         aggregatedFee.put(exchange, feeMap);
     }
+
     public BigDecimal getMakerFee(Exchange exchange, CurrencyPair currencyPair) {
-        return aggregatedFee.get(exchange).get(currencyPair).getMakerFee();
+        if (aggregatedFee.containsKey(exchange) && aggregatedFee.get(exchange).containsKey(currencyPair)) {
+            return aggregatedFee.get(exchange).get(currencyPair).getMakerFee();
+        } else {
+            LOG.warn("Unable to locate maker fee for {} {}", exchange, currencyPair);
+            return null;
+        }
     }
+
     public BigDecimal getTakerFee(Exchange exchange, CurrencyPair currencyPair) {
-        return aggregatedFee.get(exchange).get(currencyPair).getTakerFee();
+        if (aggregatedFee.containsKey(exchange) && aggregatedFee.get(exchange).containsKey(currencyPair)) {
+            return aggregatedFee.get(exchange).get(currencyPair).getTakerFee();
+        } else {
+            LOG.warn("Unable to locate taker fee for {} {}", exchange, currencyPair);
+            return null;
+        }
     }
+
     public void upsertMetadata(Exchange exchange, Map<CurrencyPair, CurrencyPairMetaData> metadataMap) {
         aggregatedMetadata.put(exchange, metadataMap);
     }
+
     public void upsertAccountInfo(Exchange exchange, AccountInfo accountInfo) {
         aggregatedAccountInfo.put(exchange, accountInfo);
     }

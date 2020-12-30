@@ -28,6 +28,7 @@ exchange:
       currency_pairs:
         - "BTC_USD"
         - "ETH_USD"
+        - "LTC_USD"
     api:
       refresh_rate: 10
       credentials:
@@ -40,6 +41,7 @@ exchange:
       currency_pairs:
         - "BTC_USD"
         - "ETH_USD"
+        - "LTC_USD"
     api:
       refresh_rate: 10
       credentials:
@@ -51,6 +53,8 @@ exchange:
       depth: 10
       currency_pairs:
         - "BTC_USD"
+        - "ETH_USD"
+        - "LTC_USD"
     api:
       refresh_rate: 10
       credentials:

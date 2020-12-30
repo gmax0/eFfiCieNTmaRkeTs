@@ -11,6 +11,13 @@
     <properties>
 
     </properties>
+    <repositories>
+        <repository>
+            <id>local-repo</id>
+            <name>local</name>
+            <url>${user.home}/.m2/repository</url>
+        </repository>
+    </repositories>
 
     <dependencies>
         <!-- GUI Visualization -->
@@ -35,6 +42,11 @@
 
 
         <!-- Exchange Websocket Integrations -->
+        <dependency>
+            <groupId>org.knowm.xchange</groupId>
+            <artifactId>xchange-core</artifactId>
+            <version>5.0.4</version>
+        </dependency>
         <dependency>
             <groupId>org.knowm.xchange</groupId>
             <artifactId>xchange-stream-coinbasepro</artifactId>

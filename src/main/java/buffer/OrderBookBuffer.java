@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import services.Bookkeeper;
 import services.OscillationArbitrager;
+import util.ThreadFactory;
 
 /**
  * Disruptor-backed Buffer exclusively used for OrderBookEvents
@@ -22,7 +23,7 @@ import services.OscillationArbitrager;
 public class OrderBookBuffer {
 
     private static Logger LOG = LoggerFactory.getLogger(OrderBookBuffer.class);
-    private static final String bufferName = "orderbook-buffer";
+    private static final String bufferName = "orderbook-buffer-consumer";
     private Disruptor<OrderBookEvent> disruptor;
     private RingBuffer ringBuffer;
 
@@ -36,12 +37,16 @@ public class OrderBookBuffer {
                 ProducerType.MULTI,
                 new SleepingWaitStrategy());
 
-        disruptor.handleEventsWith(bookkeeper, oscillationArbitrager);
+//        disruptor.handleEventsWith(bookkeeper, oscillationArbitrager);
+        disruptor.handleEventsWith(bookkeeper);
+        disruptor.handleEventsWith(oscillationArbitrager);
 //        disruptor.handleEventsWith(bookkeeper, bookkeeper);
 //        disruptor.after(bookkeeper);
         disruptor.setDefaultExceptionHandler(new ExceptionHandler<>());
 
         this.ringBuffer = disruptor.getRingBuffer();
+
+        LOG.info("Instantiated OrderBookBuffer");
     }
 
     public void insert(OrderBook orderBook, Exchange exchange, CurrencyPair currencyPair) {
@@ -49,13 +54,13 @@ public class OrderBookBuffer {
     }
 
     public void start() {
-        LOG.info("Starting disruptor.");
         disruptor.start();
+        LOG.info("Started OrderBookBuffer disruptor.");
     }
 
     public void shutdown() {
-        LOG.info("Shutting down disruptor.");
         disruptor.shutdown();
+        LOG.info("Shut down OrderBookBuffer disruptor.");
     }
 
     private class ExceptionHandler<OrderBookEvent> implements com.lmax.disruptor.ExceptionHandler<OrderBookEvent> {

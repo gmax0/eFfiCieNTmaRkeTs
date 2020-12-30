@@ -9,8 +9,7 @@ import com.lmax.disruptor.dsl.ProducerType;
 import lombok.Builder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import services.Bookkeeper;
-import services.OscillationArbitrager;
+import util.ThreadFactory;
 
 /**
  * Disruptor-backed Buffer exclusively used for TradeEvents
@@ -42,13 +41,13 @@ public class TradeBuffer {
     }
 
     public void start() {
-        LOG.info("Starting disruptor.");
         disruptor.start();
+        LOG.info("Started TradeBuffer disruptor.");
     }
 
     public void shutdown() {
-        LOG.info("Shutting down disruptor.");
         disruptor.shutdown();
+        LOG.info("Shut down TradeBuffer disruptor.");
     }
 
     private class ExceptionHandler<TradeEvent> implements com.lmax.disruptor.ExceptionHandler<TradeEvent> {

@@ -9,7 +9,8 @@
         </File>
     </Appenders>
     <Loggers>
-        <Root level="debug">
+        <logger name="si.mazi.rescu" level="info"/>
+        <Root level="info">
             <AppenderRef ref="Console" />
             <AppenderRef ref="MyFile"/>
         </Root>
