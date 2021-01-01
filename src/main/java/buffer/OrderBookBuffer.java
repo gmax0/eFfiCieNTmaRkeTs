@@ -5,7 +5,7 @@ import com.lmax.disruptor.SleepingWaitStrategy;
 import com.lmax.disruptor.dsl.Disruptor;
 import buffer.events.OrderBookEvent;
 import com.lmax.disruptor.dsl.ProducerType;
-import constants.Exchange;
+import domain.constants.Exchange;
 import lombok.Builder;
 import org.knowm.xchange.currency.CurrencyPair;
 import org.knowm.xchange.dto.marketdata.OrderBook;
@@ -23,12 +23,12 @@ import util.ThreadFactory;
 public class OrderBookBuffer {
 
     private static Logger LOG = LoggerFactory.getLogger(OrderBookBuffer.class);
-    private static final String bufferName = "orderbook-buffer-consumer";
+    private static final String bufferName = "orderbookBufferConsumer";
     private Disruptor<OrderBookEvent> disruptor;
     private RingBuffer ringBuffer;
 
     @Builder
-    public OrderBookBuffer(Bookkeeper bookkeeper, SpatialArbitrager spatialArbitrager) {
+    public OrderBookBuffer(SpatialArbitrager spatialArbitrager) {
         //TODO: configurize disruptor parameters
         this.disruptor = new Disruptor(
                 OrderBookEvent::new,

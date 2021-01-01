@@ -1,6 +1,6 @@
 package rest;
 
-import constants.Exchange;
+import domain.constants.Exchange;
 
 import java.io.IOException;
 

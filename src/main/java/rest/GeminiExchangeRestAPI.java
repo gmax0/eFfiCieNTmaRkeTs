@@ -21,12 +21,12 @@ import services.MetadataAggregator;
 import java.io.IOException;
 import java.util.Map;
 
-import static constants.Exchange.GEMINI;
+import static domain.constants.Exchange.GEMINI;
 
 public class GeminiExchangeRestAPI implements ExchangeRestAPI {
     private static final Logger LOG = LoggerFactory.getLogger(GeminiExchangeRestAPI.class);
 
-    private final constants.Exchange exchangeName = GEMINI;
+    private final domain.constants.Exchange exchangeName = GEMINI;
     private Exchange exchangeInstance;
     private GeminiAccountService accountService;
     private GeminiTradeService tradeService;
@@ -65,7 +65,7 @@ public class GeminiExchangeRestAPI implements ExchangeRestAPI {
     }
 
     @Override
-    public constants.Exchange getExchangeName() {
+    public domain.constants.Exchange getExchangeName() {
         return exchangeName;
     }
 

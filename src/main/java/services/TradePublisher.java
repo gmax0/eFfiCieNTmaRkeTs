@@ -1,9 +1,8 @@
 package services;
 
-import buffer.events.OrderBookEvent;
 import buffer.events.TradeEvent;
 import com.lmax.disruptor.EventHandler;
-import constants.Exchange;
+import domain.constants.Exchange;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rest.ExchangeRestAPI;
@@ -28,6 +27,7 @@ public class TradePublisher implements EventHandler<TradeEvent> {
 
     @Override
     public void onEvent(TradeEvent event, long sequence, boolean endOfBatch) {
-
+        LOG.info("Received trading event: {} {} {} {} {} {}", event.getExchange(), event.getCurrencyPair(), event.getOrderActionType(),
+                event.getOrderType(), event.getPrice(), event.getAmount());
     }
 }

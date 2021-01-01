@@ -21,12 +21,12 @@ import services.MetadataAggregator;
 import java.io.IOException;
 import java.util.Map;
 
-import static constants.Exchange.BITFINEX;
+import static domain.constants.Exchange.BITFINEX;
 
 public class BitfinexExchangeRestAPI implements ExchangeRestAPI {
     private static final Logger LOG = LoggerFactory.getLogger(BitfinexExchangeRestAPI.class);
 
-    private final constants.Exchange exchangeName = BITFINEX;
+    private final domain.constants.Exchange exchangeName = BITFINEX;
     private Exchange exchangeInstance;
     private BitfinexAccountService accountService;
     private BitfinexTradeService tradeService;
@@ -74,7 +74,7 @@ public class BitfinexExchangeRestAPI implements ExchangeRestAPI {
     }
 
     @Override
-    public constants.Exchange getExchangeName() {
+    public domain.constants.Exchange getExchangeName() {
         return exchangeName;
     }
 

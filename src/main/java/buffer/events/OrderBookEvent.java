@@ -1,7 +1,7 @@
 package buffer.events;
 
 import com.lmax.disruptor.EventTranslatorThreeArg;
-import constants.Exchange;
+import domain.constants.Exchange;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.knowm.xchange.currency.CurrencyPair;

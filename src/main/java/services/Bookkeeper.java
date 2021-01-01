@@ -2,7 +2,7 @@ package services;
 
 import buffer.events.OrderBookEvent;
 import com.lmax.disruptor.EventHandler;
-import constants.Exchange;
+import domain.constants.Exchange;
 import org.knowm.xchange.currency.CurrencyPair;
 import org.knowm.xchange.dto.marketdata.OrderBook;
 import org.slf4j.Logger;

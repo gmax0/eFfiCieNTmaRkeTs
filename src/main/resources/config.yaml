@@ -4,7 +4,7 @@ strategies:
     enabled: false
   oscillation:
     enabled: false
-    min_gain: .002
+    min_gain: .001
   #  min_gain: .002
 
 exchange:
@@ -17,7 +17,7 @@ exchange:
         - "ETH_USD"
         - "LTC_USD"
     api:
-      refresh_rate: 10
+      refresh_rate: 60
       credentials:
         api_key: "${env:COINBASEPRO_API_KEY}"
         secret_key: "${env:COINBASEPRO_SECRET_KEY}"
@@ -31,7 +31,7 @@ exchange:
         - "ETH_USD"
         - "LTC_USD"
     api:
-      refresh_rate: 10
+      refresh_rate: 60
       credentials:
         api_key: "${env:KRAKEN_API_KEY}"
         secret_key: "${env:KRAKEN_SECRET_KEY}"
@@ -44,7 +44,7 @@ exchange:
         - "ETH_USD"
         - "LTC_USD"
     api:
-      refresh_rate: 10
+      refresh_rate: 60
       credentials:
         api_key: "${env:BITFINEX_API_KEY}"
         secret_key: "${env:BITFINEX_SECRET_KEY}"
@@ -57,7 +57,7 @@ exchange:
         - "ETH_USD"
         - "LTC_USD"
     api:
-      refresh_rate: 10
+      refresh_rate: 60
       credentials:
         api_key: "${env:GEMINI_API_KEY}"
         secret_key: "${env:GEMINI_SECRET_KEY}"

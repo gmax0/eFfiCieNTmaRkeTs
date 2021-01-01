@@ -1,4 +1,5 @@
 import buffer.OrderBookBuffer;
+import services.TradePublisher;
 import streams.BitfinexExchangeStream;
 import streams.CoinbaseProExchangeStream;
 import streams.GeminiExchangeStream;
@@ -33,20 +34,21 @@ public class Application {
         //Setup Services
         //TODO: setup a dependency injection framework
         MetadataAggregator metadataAggregator = new MetadataAggregator();
-        Bookkeeper bookkeeper = new Bookkeeper();
-        TradeBuffer tradeBuffer = new TradeBuffer();
-        SpatialArbitrager spatialArbitrager = new SpatialArbitrager(config, metadataAggregator, tradeBuffer);
-        OrderBookBuffer orderBookBuffer = new OrderBookBuffer(bookkeeper, spatialArbitrager);
-
-        //Start Buffers
-        tradeBuffer.start();
-        orderBookBuffer.start();
 
         //Setup ExchangeRestAPIs
         GeminiExchangeRestAPI geminiExchangeRestAPI = new GeminiExchangeRestAPI(config, metadataAggregator);
         CoinbaseProExchangeRestAPI coinbaseProExchangeRestAPI = new CoinbaseProExchangeRestAPI(config, metadataAggregator);
         BitfinexExchangeRestAPI bitfinexExchangeRestAPI = new BitfinexExchangeRestAPI(config, metadataAggregator);
         KrakenExchangeRestAPI krakenExchangeRestAPI = new KrakenExchangeRestAPI(config, metadataAggregator);
+
+        TradePublisher tradePublisher = new TradePublisher();
+        TradeBuffer tradeBuffer = new TradeBuffer(tradePublisher);
+        SpatialArbitrager spatialArbitrager = new SpatialArbitrager(config, metadataAggregator, tradeBuffer);
+        OrderBookBuffer orderBookBuffer = new OrderBookBuffer(spatialArbitrager);
+
+        //Start Buffers
+        tradeBuffer.start();
+        orderBookBuffer.start();
 
         //Setup Refresh Tasks
         ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1, new ThreadFactory("API-Refresher"));

@@ -22,12 +22,12 @@ import services.MetadataAggregator;
 import java.io.IOException;
 import java.util.Map;
 
-import static constants.Exchange.COINBASE_PRO;
+import static domain.constants.Exchange.COINBASE_PRO;
 
 public class CoinbaseProExchangeRestAPI implements ExchangeRestAPI {
     private static final Logger LOG = LoggerFactory.getLogger(CoinbaseProExchangeRestAPI.class);
 
-    private final constants.Exchange exchangeName = COINBASE_PRO;
+    private final domain.constants.Exchange exchangeName = COINBASE_PRO;
     private Exchange exchangeInstance;
     private CoinbaseProAccountService accountService;
     private CoinbaseProTradeService tradeService;
@@ -76,7 +76,7 @@ public class CoinbaseProExchangeRestAPI implements ExchangeRestAPI {
     }
 
     @Override
-    public constants.Exchange getExchangeName() {
+    public domain.constants.Exchange getExchangeName() {
         return exchangeName;
     }
 

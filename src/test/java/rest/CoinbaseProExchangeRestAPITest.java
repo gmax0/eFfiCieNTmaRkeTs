@@ -63,8 +63,8 @@ public class CoinbaseProExchangeRestAPITest {
         when(exchangeMetaData.getCurrencyPairs()).thenReturn(currencyPairCurrencyPairMetaDataMap1);
 
         coinbaseProExchangeRestAPI.refreshProducts();
-        verify(metadataAggregator, times(1)).upsertMetadata(eq(constants.Exchange.COINBASE_PRO), eq(currencyPairCurrencyPairMetaDataMap1));
-        assertEquals(1, metadataAggregator.getCurrencyPairMetaDataMap(constants.Exchange.COINBASE_PRO).size());
+        verify(metadataAggregator, times(1)).upsertMetadata(eq(domain.constants.Exchange.COINBASE_PRO), eq(currencyPairCurrencyPairMetaDataMap1));
+        assertEquals(1, metadataAggregator.getCurrencyPairMetaDataMap(domain.constants.Exchange.COINBASE_PRO).size());
 
         //Second Refresh Call
         Map<CurrencyPair, CurrencyPairMetaData> currencyPairCurrencyPairMetaDataMap2 = new HashMap<>();
@@ -76,7 +76,7 @@ public class CoinbaseProExchangeRestAPITest {
         when(exchangeMetaData.getCurrencyPairs()).thenReturn(currencyPairCurrencyPairMetaDataMap2);
 
         coinbaseProExchangeRestAPI.refreshProducts();
-        verify(metadataAggregator, times(1)).upsertMetadata(eq(constants.Exchange.COINBASE_PRO), eq(currencyPairCurrencyPairMetaDataMap2));
-        assertEquals(2, metadataAggregator.getCurrencyPairMetaDataMap(constants.Exchange.COINBASE_PRO).size());
+        verify(metadataAggregator, times(1)).upsertMetadata(eq(domain.constants.Exchange.COINBASE_PRO), eq(currencyPairCurrencyPairMetaDataMap2));
+        assertEquals(2, metadataAggregator.getCurrencyPairMetaDataMap(domain.constants.Exchange.COINBASE_PRO).size());
     }
 }

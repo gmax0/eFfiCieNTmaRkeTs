@@ -4,7 +4,10 @@ import buffer.TradeBuffer;
 import buffer.events.OrderBookEvent;
 import com.lmax.disruptor.EventHandler;
 import config.Configuration;
-import constants.Exchange;
+import domain.Trade;
+import domain.constants.Exchange;
+import domain.constants.OrderActionType;
+import domain.constants.OrderType;
 import org.apache.commons.lang3.time.StopWatch;
 import org.knowm.xchange.currency.CurrencyPair;
 import org.knowm.xchange.dto.marketdata.OrderBook;
@@ -16,6 +19,10 @@ import java.math.RoundingMode;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static domain.constants.OrderActionType.ASK;
+import static domain.constants.OrderActionType.BID;
+import static domain.constants.OrderType.LIMIT;
+
 /**
  *
  */
@@ -23,22 +30,23 @@ public class SpatialArbitrager implements EventHandler<OrderBookEvent> {
 
     private static final Logger LOG = LoggerFactory.getLogger(SpatialArbitrager.class);
 
-    //Sort OrderBooks by the natural order defined for a LimitOrder (ascending)
-    private static final Comparator<Map.Entry<Exchange, OrderBook>> comparator = (e1, e2) -> {
-        if (((Exchange)e1.getKey()).name().equals(((Exchange)e2.getKey()).name())) return 0;
+    //Sort OrderBooks in ascending order according to each book's first ask
+    private static final Comparator<Map.Entry<Exchange, OrderBook>> ascendingAskComparator = (e1, e2) -> {
+        if (e1.getKey().name().equals(e2.getKey().name())) return 0;
         return e1.getValue().getAsks().get(0).compareTo(e2.getValue().getAsks().get(0));
     };
 
-    private static final Comparator<Map.Entry<Exchange, OrderBook>> comparator2 = (e1, e2) -> {
-        if (((Exchange)e1.getKey()).name().equals(((Exchange)e2.getKey()).name())) return 0;
-        return e1.getValue().getAsks().get(0).compareTo(e2.getValue().getAsks().get(0));
+    //Sort OrderBooks in descending order according to each book's first bid
+    private static final Comparator<Map.Entry<Exchange, OrderBook>> descendingBidComparator = (e1, e2) -> {
+        if (e1.getKey().name().equals(e2.getKey().name())) return 0;
+        return e1.getValue().getBids().get(0).compareTo(e2.getValue().getBids().get(0));
     };
 
     private MetadataAggregator metadataAggregator;
     private TradeBuffer tradeBuffer;
 
-    final private Map<CurrencyPair, TreeSet<Entry<Exchange, OrderBook>>> order = new ConcurrentHashMap<>();
-    final private Map<CurrencyPair, TreeSet<Entry<Exchange, OrderBook>>> orderBooks = new ConcurrentHashMap<>();
+    final private Map<CurrencyPair, TreeSet<Entry<Exchange, OrderBook>>> orderBooksAscendingAsks = new ConcurrentHashMap<>();
+    final private Map<CurrencyPair, TreeSet<Entry<Exchange, OrderBook>>> orderBooksDescendingBids = new ConcurrentHashMap<>();
 
     private BigDecimal minGain;
 
@@ -84,20 +92,32 @@ public class SpatialArbitrager implements EventHandler<OrderBookEvent> {
 
     //TODO: Not sure why but long-running executions results in a single exchange with a duplicate entry in the TreeSet...
     public void upsertOrderBook(Exchange exchange, CurrencyPair currencyPair, OrderBook orderBook) {
-        orderBooks.computeIfAbsent(currencyPair, (k) -> {
-           return new TreeSet(comparator);
+        orderBooksAscendingAsks.computeIfAbsent(currencyPair, (k) -> {
+           return new TreeSet(ascendingAskComparator);
+        });
+        orderBooksDescendingBids.computeIfAbsent(currencyPair, (k) -> {
+            return new TreeSet(descendingBidComparator);
         });
 
         Entry<Exchange, OrderBook> entry = new Entry(exchange, orderBook);
-        if (orderBooks.get(currencyPair).contains(entry)) {
-            orderBooks.get(currencyPair).remove(entry);
+        if (orderBooksAscendingAsks.get(currencyPair).contains(entry)) {
+            orderBooksAscendingAsks.get(currencyPair).remove(entry);
         }
-        orderBooks.get(currencyPair).add(entry);
+        if (orderBooksDescendingBids.get(currencyPair).contains(entry)) {
+            orderBooksDescendingBids.get(currencyPair).remove(entry);
+        }
+
+        orderBooksAscendingAsks.get(currencyPair).add(entry);
+        orderBooksDescendingBids.get(currencyPair).add(entry);
         computeTrades(currencyPair);
     }
 
-    public TreeSet<Entry<Exchange, OrderBook>> getOrderBooks(CurrencyPair currencyPair) {
-        return orderBooks.get(currencyPair);
+    public TreeSet<Entry<Exchange, OrderBook>> getOrderBooksAscendingAsks(CurrencyPair currencyPair) {
+        return orderBooksAscendingAsks.get(currencyPair);
+    }
+
+    public TreeSet<Entry<Exchange, OrderBook>> getOrderBooksDescendingBids(CurrencyPair currencyPair) {
+        return orderBooksDescendingBids.get(currencyPair);
     }
 
     public void computeTrades(CurrencyPair currencyPair) {
@@ -108,39 +128,88 @@ public class SpatialArbitrager implements EventHandler<OrderBookEvent> {
         }
 
         try {
+            if (orderBooksAscendingAsks.size() != orderBooksDescendingBids.size()) {
+                LOG.error("Different TreeSet sizes for currency pair {}", currencyPair);
+                return;
+            }
+
             //Not enough exchanges to analyze price deviations
-            if (orderBooks.get(currencyPair).size() <= 1) {
+            if (orderBooksAscendingAsks.get(currencyPair).size() <= 1) {
                 LOG.debug("Currency Pair: {} does not possess the minimum number of exchanges to perform oscillation arbitrage analysis", currencyPair);
             } else {
                 //Point to the OrderBook with the lowest ask/bid
-                Iterator ascendingIterator = orderBooks.get(currencyPair).iterator();
+                Iterator askIterator = orderBooksAscendingAsks.get(currencyPair).iterator();
                 //Point to the OrderBook with the highest ask/bid
-                Iterator descendingIterator = orderBooks.get(currencyPair).descendingIterator();
+                Iterator bidIterator = orderBooksDescendingBids.get(currencyPair).iterator();
 
-                //For now, use whichever fee (maker or taker) is greatest as the effective fee
-                while (ascendingIterator.hasNext() && descendingIterator.hasNext()) {
-                    Entry<Exchange, OrderBook> ex1 = (Entry) ascendingIterator.next();
+                while (askIterator.hasNext() && bidIterator.hasNext()) {
+                    Entry<Exchange, OrderBook> ex1 = (Entry) askIterator.next();
+                    Entry<Exchange, OrderBook> ex2 = (Entry) bidIterator.next();
+
+                    if (ex1.key.equals(ex2.key)) {
+                        if (askIterator.hasNext()) {
+                            askIterator.next();
+                        }
+                        continue;
+                    }
+
+                    //For now, use taker fee as default
                     BigDecimal ex1MakerFee = metadataAggregator.getMakerFee(ex1.key, currencyPair);
                     BigDecimal ex1TakerFee = metadataAggregator.getTakerFee(ex1.key, currencyPair);
                     BigDecimal ex1LowestAsk = ex1.value.getAsks().get(0).getLimitPrice();
+                    BigDecimal ex1HighestBid = ex1.value.getBids().get(0).getLimitPrice(); //To determine price level ceiling for a maker order
+                    BigDecimal ex1EffectivePrice = ex1LowestAsk;
 
-                    Entry<Exchange, OrderBook> ex2 = (Entry) descendingIterator.next();
                     BigDecimal ex2MakerFee = metadataAggregator.getMakerFee(ex2.key, currencyPair);
                     BigDecimal ex2TakerFee = metadataAggregator.getTakerFee(ex2.key, currencyPair);
+                    BigDecimal ex2LowestAsk = ex2.value.getAsks().get(0).getLimitPrice(); // To determine price level floor for a taker order
                     BigDecimal ex2HighestBid = ex2.value.getBids().get(0).getLimitPrice();
+                    BigDecimal ex2HighestBidVolume = ex2.value.getBids().get(0).getOriginalAmount();
+                    BigDecimal ex2EffectivePrice = ex2HighestBid;
 
-                    BigDecimal netBuyAmount = ex1LowestAsk.multiply(BigDecimal.ONE.subtract(ex1TakerFee));
-                    BigDecimal netSellAmount = ex2HighestBid.multiply(BigDecimal.ONE.subtract(ex2TakerFee));
+
+                    /*
+                    BigDecimal netBuyAmount = ex1EffectivePrice.divide(ex2HighestBidVolume, 5, RoundingMode.HALF_EVEN).multiply(BigDecimal.ONE.subtract(ex1TakerFee));
+                    BigDecimal netSellAmount = ex2EffectivePrice.multiply(ex2HighestBidVolume).multiply(BigDecimal.ONE.subtract(ex2TakerFee));
 
                     if (netSellAmount.compareTo(netBuyAmount) > 0
                             && netSellAmount.subtract(netBuyAmount).divide(netBuyAmount, 5, RoundingMode.HALF_EVEN).compareTo(minGain) >= 0) {
-                        LOG.info("Arbitrage Opportunity Detected! Buy on {} at {}, Sell on {} at {}",
-                                ex1.key, ex1LowestAsk, ex2.key, ex2HighestBid);
+                        LOG.info("Arbitrage Opportunity Detected for {} ! Buy {} units on {} at {}, Sell {} units on {} at {}",
+                                currencyPair, ex2HighestBidVolume, ex1.key, ex1EffectivePrice, ex2HighestBidVolume, ex2.key, ex2EffectivePrice);
                         LOG.info("With fees calculated, Buy Net Amount: {}, Sell Net Amount: {}",
                                 netBuyAmount, netSellAmount);
                     } else {
                         LOG.debug("Nope.");
                         break;
+                    }
+
+                     */
+                    BigDecimal costToBuy = ex1EffectivePrice.multiply(ex2HighestBidVolume).divide(BigDecimal.ONE.subtract(ex1TakerFee), 5, RoundingMode.HALF_EVEN);
+                    BigDecimal totalSold = ex2EffectivePrice.multiply(ex2HighestBidVolume).multiply(BigDecimal.ONE.subtract(ex2TakerFee));
+
+                    if (totalSold.compareTo(costToBuy) > 0
+                            && totalSold.subtract(costToBuy).divide(costToBuy, 5, RoundingMode.HALF_EVEN).compareTo(minGain) >= 0) {
+                        LOG.info("Arbitrage Opportunity Detected for {} ! Buy {} units on {} at {}, Sell {} units on {} at {}",
+                                currencyPair, ex2HighestBidVolume, ex1.key, ex1EffectivePrice, ex2HighestBidVolume, ex2.key, ex2EffectivePrice);
+                        LOG.info("With fees calculated, Cost To Buy: {} , Amount Sold: {}, Profit: {}",
+                                costToBuy, totalSold, totalSold.subtract(costToBuy));
+
+                        tradeBuffer.insert(Trade.builder()
+                                .exchange(ex1.key)
+                                .currencyPair(currencyPair)
+                                .orderActionType(BID)
+                                .orderType(LIMIT)
+                                .price(ex1EffectivePrice)
+                                .amount(ex2HighestBidVolume)
+                                .build());
+                        tradeBuffer.insert(Trade.builder()
+                                .exchange(ex2.key)
+                                .currencyPair(currencyPair)
+                                .orderActionType(ASK)
+                                .orderType(LIMIT)
+                                .price(ex2EffectivePrice)
+                                .amount(ex2HighestBidVolume)
+                                .build());
                     }
                 }
             }
@@ -152,4 +221,6 @@ public class SpatialArbitrager implements EventHandler<OrderBookEvent> {
         LOG.debug("OscillationArbitrager Execution Time (nanoseconds): {}", Long.toString(stopWatch.getNanoTime()));
         stopWatch.reset();
     }
+
+
 }

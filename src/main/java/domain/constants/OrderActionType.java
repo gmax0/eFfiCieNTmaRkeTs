@@ -1,4 +1,4 @@
-package constants;
+package domain.constants;
 
 public enum OrderActionType {
     BID,

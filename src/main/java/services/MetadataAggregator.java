@@ -1,6 +1,6 @@
 package services;
 
-import constants.Exchange;
+import domain.constants.Exchange;
 import org.knowm.xchange.currency.CurrencyPair;
 import org.knowm.xchange.dto.account.AccountInfo;
 import org.knowm.xchange.dto.account.Fee;

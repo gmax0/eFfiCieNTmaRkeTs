@@ -6,10 +6,18 @@ import com.lmax.disruptor.RingBuffer;
 import com.lmax.disruptor.SleepingWaitStrategy;
 import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.dsl.ProducerType;
+import domain.Trade;
+import domain.constants.Exchange;
+import domain.constants.OrderActionType;
+import domain.constants.OrderType;
 import lombok.Builder;
+import org.knowm.xchange.currency.CurrencyPair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import services.TradePublisher;
 import util.ThreadFactory;
+
+import java.math.BigDecimal;
 
 /**
  * Disruptor-backed Buffer exclusively used for TradeEvents
@@ -18,12 +26,12 @@ import util.ThreadFactory;
  */
 public class TradeBuffer {
     private static Logger LOG = LoggerFactory.getLogger(OrderBookBuffer.class);
-    private static final String bufferName = "trade-buffer";
-    private Disruptor<OrderBookEvent> disruptor;
+    private static final String bufferName = "tradeBufferConsumer";
+    private Disruptor<TradeEvent> disruptor;
     private RingBuffer ringBuffer;
 
     @Builder
-    public TradeBuffer() {
+    public TradeBuffer(TradePublisher tradePublisher) {
         //TODO: configurize disruptor parameters
         this.disruptor = new Disruptor(
                 TradeEvent::new,
@@ -32,12 +40,15 @@ public class TradeBuffer {
                 ProducerType.MULTI,
                 new SleepingWaitStrategy());
 
-//        disruptor.handleEventsWith(bookkeeper, oscillationArbitrager);
-//        disruptor.handleEventsWith(bookkeeper, bookkeeper);
+        disruptor.handleEventsWith(tradePublisher);
 //        disruptor.after(bookkeeper);
         disruptor.setDefaultExceptionHandler(new TradeBuffer.ExceptionHandler<>());
 
         this.ringBuffer = disruptor.getRingBuffer();
+    }
+
+    public void insert(Trade trade) {
+        ringBuffer.publishEvent(TradeEvent.TRANSLATOR, trade);
     }
 
     public void start() {

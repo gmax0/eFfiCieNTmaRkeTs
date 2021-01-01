@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 
-import static constants.Exchange.BITFINEX;
+import static domain.constants.Exchange.BITFINEX;
 
 public class BitfinexExchangeStream {
     private static final Logger LOG = LoggerFactory.getLogger(BitfinexExchangeStream.class);

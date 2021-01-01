@@ -22,12 +22,12 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import static constants.Exchange.KRAKEN;
+import static domain.constants.Exchange.KRAKEN;
 
 public class KrakenExchangeRestAPI implements ExchangeRestAPI {
     private static final Logger LOG = LoggerFactory.getLogger(KrakenExchangeRestAPI.class);
 
-    private final constants.Exchange exchangeName = KRAKEN;
+    private final domain.constants.Exchange exchangeName = KRAKEN;
     private Exchange exchangeInstance;
     private KrakenAccountService accountService;
     private KrakenTradeService tradeService;
@@ -75,7 +75,7 @@ public class KrakenExchangeRestAPI implements ExchangeRestAPI {
     }
 
     @Override
-    public constants.Exchange getExchangeName() {
+    public domain.constants.Exchange getExchangeName() {
         return exchangeName;
     }
 
