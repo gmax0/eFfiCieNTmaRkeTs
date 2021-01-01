@@ -19,9 +19,9 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  *
  */
-public class OscillationArbitrager implements EventHandler<OrderBookEvent> {
+public class SpatialArbitrager implements EventHandler<OrderBookEvent> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(OscillationArbitrager.class);
+    private static final Logger LOG = LoggerFactory.getLogger(SpatialArbitrager.class);
 
     //Sort OrderBooks by the natural order defined for a LimitOrder (ascending)
     private static final Comparator<Map.Entry<Exchange, OrderBook>> comparator = (e1, e2) -> {
@@ -29,17 +29,24 @@ public class OscillationArbitrager implements EventHandler<OrderBookEvent> {
         return e1.getValue().getAsks().get(0).compareTo(e2.getValue().getAsks().get(0));
     };
 
+    private static final Comparator<Map.Entry<Exchange, OrderBook>> comparator2 = (e1, e2) -> {
+        if (((Exchange)e1.getKey()).name().equals(((Exchange)e2.getKey()).name())) return 0;
+        return e1.getValue().getAsks().get(0).compareTo(e2.getValue().getAsks().get(0));
+    };
+
     private MetadataAggregator metadataAggregator;
     private TradeBuffer tradeBuffer;
-    private Map<CurrencyPair, TreeSet<Entry<Exchange, OrderBook>>> orderBooks = new ConcurrentHashMap<>();
+
+    final private Map<CurrencyPair, TreeSet<Entry<Exchange, OrderBook>>> order = new ConcurrentHashMap<>();
+    final private Map<CurrencyPair, TreeSet<Entry<Exchange, OrderBook>>> orderBooks = new ConcurrentHashMap<>();
 
     private BigDecimal minGain;
 
     private StopWatch stopWatch;
 
-    public OscillationArbitrager(Configuration cfg,
-                                 MetadataAggregator metadataAggregator,
-                                 TradeBuffer tradeBuffer) {
+    public SpatialArbitrager(Configuration cfg,
+                             MetadataAggregator metadataAggregator,
+                             TradeBuffer tradeBuffer) {
         this.minGain = cfg.getOscillationArbitragerConfig().getMinGain();
 
         this.metadataAggregator = metadataAggregator;
@@ -75,7 +82,7 @@ public class OscillationArbitrager implements EventHandler<OrderBookEvent> {
         this.upsertOrderBook(event.exchange, event.currencyPair, event.orderBook);
     }
 
-    //Make sure you unit test this...basically broke the app
+    //TODO: Not sure why but long-running executions results in a single exchange with a duplicate entry in the TreeSet...
     public void upsertOrderBook(Exchange exchange, CurrencyPair currencyPair, OrderBook orderBook) {
         orderBooks.computeIfAbsent(currencyPair, (k) -> {
            return new TreeSet(comparator);
@@ -94,7 +101,6 @@ public class OscillationArbitrager implements EventHandler<OrderBookEvent> {
     }
 
     public void computeTrades(CurrencyPair currencyPair) {
-//        LOG.info("this is my compute thread");
         if (!stopWatch.isStarted()) {
             stopWatch.start();
         } else {

@@ -43,6 +43,8 @@ public class KrakenExchangeRestAPI implements ExchangeRestAPI {
     public KrakenExchangeRestAPI(Configuration cfg,
                                    MetadataAggregator metadataAggregator) throws IOException {
         if (cfg.getKrakenConfig().isEnabled()) {
+            LOG.info("Initializing {}ExchangeRestAPI.", exchangeName);
+
             ExchangeSpecification exSpec = new KrakenExchange().getDefaultExchangeSpecification();
 
             exSpec.setSecretKey(cfg.getKrakenConfig().getSecretKey());
@@ -68,7 +70,7 @@ public class KrakenExchangeRestAPI implements ExchangeRestAPI {
             refreshFees();
             refreshAccountInfo();
         } else {
-            LOG.info("KrakenRestAPI is disabled"); //TODO: Replace with exception?
+            LOG.info("{}RestAPI is disabled", exchangeName); //TODO: Replace with exception?
         }
     }
 
@@ -79,13 +81,19 @@ public class KrakenExchangeRestAPI implements ExchangeRestAPI {
 
     @Override
     public void refreshProducts() throws IOException {
+        LOG.info("Refreshing {} Product Info.", exchangeName);
+
         exchangeInstance.remoteInit();
         metadataMap = exchangeInstance.getExchangeMetaData().getCurrencyPairs(); //NOTE: trading fees might be static for Kraken
         metadataAggregator.upsertMetadata(KRAKEN, metadataMap);
+
+        LOG.debug(metadataMap.toString());
     }
 
     @Override
     public void refreshFees() throws IOException {
+        LOG.info("Refreshing {} Fee Info.", exchangeName);
+
 //        feeMap = accountService.getDynamicTradingFees(); //TODO: XChange to implement getDynamicTradingFees
         feeMap = new HashMap<>();
         exchangeInstance.remoteInit();
@@ -94,12 +102,18 @@ public class KrakenExchangeRestAPI implements ExchangeRestAPI {
             feeMap.put(currencyPair, new Fee(currencyPairMetaData.getTradingFee(), currencyPairMetaData.getTradingFee()));
         });
         metadataAggregator.upsertFeeMap(KRAKEN, feeMap);
+
+        LOG.debug(feeMap.toString());
     }
 
     @Override
     public void refreshAccountInfo() throws IOException {
+        LOG.info("Refreshing {} Account Info.", exchangeName);
+
         accountInfo = accountService.getAccountInfo();
         metadataAggregator.upsertAccountInfo(KRAKEN, accountInfo);
+
+        LOG.debug(accountInfo.toString());
     }
 
     public Map<CurrencyPair, Fee> getFees() throws Exception {

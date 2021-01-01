@@ -42,6 +42,8 @@ public class GeminiExchangeRestAPI implements ExchangeRestAPI {
     public GeminiExchangeRestAPI(Configuration cfg,
                                       MetadataAggregator metadataAggregator) throws IOException {
         if (cfg.getGeminiConfig().isEnabled()) {
+            LOG.info("Initializing {}ExchangeRestAPI.", exchangeName);
+
             ExchangeSpecification exSpec = new GeminiExchange().getDefaultExchangeSpecification();
             exSpec.setApiKey(cfg.getGeminiConfig().getApiKey());
             exSpec.setSecretKey(cfg.getGeminiConfig().getSecretKey());
@@ -58,7 +60,7 @@ public class GeminiExchangeRestAPI implements ExchangeRestAPI {
             refreshFees();
             refreshAccountInfo();
         } else {
-            LOG.info("GeminiRestAPI is disabled"); //TODO: Replace with exception?
+            LOG.info("{}RestAPI is disabled", exchangeName); //TODO: Replace with exception?
         }
     }
 
@@ -69,21 +71,33 @@ public class GeminiExchangeRestAPI implements ExchangeRestAPI {
 
     @Override
     public void refreshProducts() throws IOException {
+        LOG.info("Refreshing {} Product Info.", exchangeName);
+
         exchangeInstance.remoteInit();
         metadataMap = exchangeInstance.getExchangeMetaData().getCurrencyPairs(); //NOTE: trading fees are not correct
         metadataAggregator.upsertMetadata(GEMINI, metadataMap);
+
+        LOG.debug(metadataMap.toString());
     }
 
     @Override
     public void refreshFees() throws IOException {
+        LOG.info("Refreshing {} Fee Info.", exchangeName);
+
         feeMap = accountService.getDynamicTradingFees();
         metadataAggregator.upsertFeeMap(GEMINI, feeMap);
+
+        LOG.debug(feeMap.toString());
     }
 
     @Override
     public void refreshAccountInfo() throws IOException {
+        LOG.info("Refreshing {} Account Info.", exchangeName);
+
         accountInfo = accountService.getAccountInfo();
         metadataAggregator.upsertAccountInfo(GEMINI, accountInfo);
+
+        LOG.debug(accountInfo.toString());
     }
 
     public Map<CurrencyPair, Fee> getFees() throws Exception {

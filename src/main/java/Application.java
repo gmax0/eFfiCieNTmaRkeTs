@@ -1,12 +1,4 @@
 import buffer.OrderBookBuffer;
-import org.knowm.xchange.currency.CurrencyPair;
-import org.knowm.xchange.dto.marketdata.OrderBook;
-import org.knowm.xchange.dto.trade.LimitOrder;
-import org.knowm.xchart.SwingWrapper;
-import org.knowm.xchart.XYChart;
-import org.knowm.xchart.XYChartBuilder;
-import org.knowm.xchart.XYSeries;
-import org.knowm.xchart.style.markers.SeriesMarkers;
 import streams.BitfinexExchangeStream;
 import streams.CoinbaseProExchangeStream;
 import streams.GeminiExchangeStream;
@@ -24,17 +16,11 @@ import rest.KrakenExchangeRestAPI;
 import rest.task.RestAPIRefreshTask;
 import services.Bookkeeper;
 import services.MetadataAggregator;
-import services.OscillationArbitrager;
+import services.SpatialArbitrager;
 
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-
-import static constants.Exchange.GEMINI;
 
 public class Application {
     public static Logger LOG = LoggerFactory.getLogger(Application.class);
@@ -49,8 +35,8 @@ public class Application {
         MetadataAggregator metadataAggregator = new MetadataAggregator();
         Bookkeeper bookkeeper = new Bookkeeper();
         TradeBuffer tradeBuffer = new TradeBuffer();
-        OscillationArbitrager oscillationArbitrager = new OscillationArbitrager(config, metadataAggregator, tradeBuffer);
-        OrderBookBuffer orderBookBuffer = new OrderBookBuffer(bookkeeper, oscillationArbitrager);
+        SpatialArbitrager spatialArbitrager = new SpatialArbitrager(config, metadataAggregator, tradeBuffer);
+        OrderBookBuffer orderBookBuffer = new OrderBookBuffer(bookkeeper, spatialArbitrager);
 
         //Start Buffers
         tradeBuffer.start();

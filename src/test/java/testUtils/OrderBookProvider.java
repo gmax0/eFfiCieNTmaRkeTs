@@ -24,7 +24,7 @@ public class OrderBookProvider {
         ArrayList<LimitOrder> asks = new ArrayList<>();
 
         try (BufferedReader br = new BufferedReader(
-                new InputStreamReader(OrderBookProvider.class.getClassLoader().getResourceAsStream("/"+bidFileName)))) {
+                new InputStreamReader(OrderBookProvider.class.getClassLoader().getResourceAsStream(bidFileName)))) {
             String line;
             int counter = 0;
             while ((line = br.readLine()) != null) {
@@ -40,7 +40,8 @@ public class OrderBookProvider {
             return null;
         }
 
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(OrderBookProvider.class.getResourceAsStream(bidFileName)))) {
+        try (BufferedReader br = new BufferedReader(
+                new InputStreamReader(OrderBookProvider.class.getClassLoader().getResourceAsStream(askFileName)))) {
             String line;
             int counter = 0;
             while ((line = br.readLine()) != null) {
@@ -56,6 +57,6 @@ public class OrderBookProvider {
             return null;
         }
 
-        return new OrderBook(date, bids, asks);
+        return new OrderBook(date, asks, bids);
     }
 }

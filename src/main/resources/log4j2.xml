@@ -4,12 +4,29 @@
         <Console name="Console" target="SYSTEM_OUT">
             <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n" />
         </Console>
-        <File name="MyFile" fileName="all.log" immediateFlush="false" append="false">
+        <File name="MyFile" fileName="all.log" immediateFlush="true" append="false">
+            <PatternLayout pattern="%d{yyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
+        </File>
+
+        <File name="ExchangeRestAPI" fileName="ExchangeRestAPI.log" immediateFlush="true" append="false">
+            <PatternLayout pattern="%d{yyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
+        </File>
+
+        <File name="SpatialArbitrager" fileName="SpatialArbitrager.log" immediateFlush="true" append="false">
             <PatternLayout pattern="%d{yyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
         </File>
     </Appenders>
     <Loggers>
         <logger name="si.mazi.rescu" level="info"/>
+
+        <logger name="rest" level="info">
+            <AppenderRef ref="ExchangeRestAPI"/>
+        </logger>
+
+        <logger name="services.SpatialArbitrager" level="info">
+            <AppenderRef ref="SpatialArbitrager"/>
+        </logger>
+
         <Root level="info">
             <AppenderRef ref="Console" />
             <AppenderRef ref="MyFile"/>

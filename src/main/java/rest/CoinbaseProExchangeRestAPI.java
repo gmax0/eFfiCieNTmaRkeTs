@@ -50,6 +50,8 @@ public class CoinbaseProExchangeRestAPI implements ExchangeRestAPI {
     public CoinbaseProExchangeRestAPI(Configuration cfg,
                                       MetadataAggregator metadataAggregator) throws IOException {
         if (cfg.getCoinbaseProConfig().isEnabled()) {
+            LOG.info("Initializing {}ExchangeRestAPI.", exchangeName);
+
             ExchangeSpecification exSpec = new CoinbaseProExchange().getDefaultExchangeSpecification();
             exSpec.setSecretKey(cfg.getCoinbaseProConfig().getSecretKey());
             exSpec.setApiKey(cfg.getCoinbaseProConfig().getApiKey());
@@ -69,7 +71,7 @@ public class CoinbaseProExchangeRestAPI implements ExchangeRestAPI {
             refreshFees();
             refreshAccountInfo();
         } else {
-            LOG.info("CoinbaseProRestAPI is disabled"); //TODO: Replace with exception?
+            LOG.info("{}RestAPI is disabled", exchangeName); //TODO: Replace with exception?
         }
     }
 
@@ -80,21 +82,33 @@ public class CoinbaseProExchangeRestAPI implements ExchangeRestAPI {
 
     @Override
     public void refreshProducts() throws IOException {
+        LOG.info("Refreshing {} Product Info.", exchangeName);
+
         exchangeInstance.remoteInit(); //A new reference will be saved in the exchangeInstance instance
         metadataMap = exchangeInstance.getExchangeMetaData().getCurrencyPairs(); //NOTE: trading fees are not correct
         metadataAggregator.upsertMetadata(COINBASE_PRO, metadataMap);
+
+        LOG.debug(metadataMap.toString());
     }
 
     @Override
     public void refreshFees() throws IOException {
+        LOG.info("Refreshing {} Fee Info.", exchangeName);
+
         feeMap = accountService.getDynamicTradingFees(); //A new reference will be returned here
         metadataAggregator.upsertFeeMap(COINBASE_PRO, feeMap);
+
+        LOG.debug(feeMap.toString());
     }
 
     @Override
     public void refreshAccountInfo() throws IOException {
+        LOG.info("Refreshing {} Account Info.", exchangeName);
+
         accountInfo = accountService.getAccountInfo(); //A new reference will be returned here
         metadataAggregator.upsertAccountInfo(COINBASE_PRO, accountInfo);
+
+        LOG.debug(accountInfo.toString());
     }
 
     public Balance getBalance(Currency currency) throws Exception {
