@@ -1,4 +1,4 @@
-package constants;
+package domain.constants;
 
 public enum Exchange {
     COINBASE_PRO("CoinbasePro"),

@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 
-import static constants.Exchange.COINBASE_PRO;
+import static domain.constants.Exchange.COINBASE_PRO;
 
 
 public class CoinbaseProExchangeStream {

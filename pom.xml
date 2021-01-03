@@ -4,13 +4,20 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.example</groupId>
+    <groupId>org.gmax</groupId>
     <artifactId>Crypto-Arbitrager-Java</artifactId>
     <version>1.0-SNAPSHOT</version>
 
     <properties>
 
     </properties>
+    <repositories>
+        <repository>
+            <id>local-repo</id>
+            <name>local</name>
+            <url>${user.home}/.m2/repository</url>
+        </repository>
+    </repositories>
 
     <dependencies>
         <!-- GUI Visualization -->
@@ -35,6 +42,11 @@
 
 
         <!-- Exchange Websocket Integrations -->
+        <dependency>
+            <groupId>org.knowm.xchange</groupId>
+            <artifactId>xchange-core</artifactId>
+            <version>5.0.4</version>
+        </dependency>
         <dependency>
             <groupId>org.knowm.xchange</groupId>
             <artifactId>xchange-stream-coinbasepro</artifactId>

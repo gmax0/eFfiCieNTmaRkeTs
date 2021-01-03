@@ -12,7 +12,7 @@ import java.util.List;
 @Getter
 public class Configuration {
 
-    private OscillationArbitragerConfig oscillationArbitragerConfig;
+    private SpatialArbitragerConfig spatialArbitragerConfig;
     private CoinbaseProConfig coinbaseProConfig;
     private KrakenConfig krakenConfig;
     private BitfinexConfig bitfinexConfig;
@@ -20,9 +20,10 @@ public class Configuration {
 
     @Builder
     @Getter
-    public static class OscillationArbitragerConfig {
+    public static class SpatialArbitragerConfig {
         boolean enabled;
         BigDecimal minGain;
+        BigDecimal cacheTime;
     }
 
     @SuperBuilder

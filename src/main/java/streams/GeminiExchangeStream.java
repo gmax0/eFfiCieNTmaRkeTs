@@ -9,15 +9,13 @@ import info.bitrich.xchangestream.core.StreamingExchangeFactory;
 import io.reactivex.disposables.Disposable;
 import org.knowm.xchange.ExchangeSpecification;
 import org.knowm.xchange.currency.CurrencyPair;
-import org.knowm.xchange.dto.marketdata.OrderBook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static constants.Exchange.COINBASE_PRO;
-import static constants.Exchange.GEMINI;
+import static domain.constants.Exchange.GEMINI;
 
 public class GeminiExchangeStream {
 

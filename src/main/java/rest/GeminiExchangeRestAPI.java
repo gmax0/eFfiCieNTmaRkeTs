@@ -21,12 +21,13 @@ import services.MetadataAggregator;
 import java.io.IOException;
 import java.util.Map;
 
-import static constants.Exchange.GEMINI;
+import static domain.constants.Exchange.GEMINI;
 
-public class GeminiExchangeRestAPI {
+public class GeminiExchangeRestAPI implements ExchangeRestAPI {
     private static final Logger LOG = LoggerFactory.getLogger(GeminiExchangeRestAPI.class);
 
-    private Exchange exchange;
+    private final domain.constants.Exchange exchangeName = GEMINI;
+    private Exchange exchangeInstance;
     private GeminiAccountService accountService;
     private GeminiTradeService tradeService;
     private GeminiMarketDataService marketDataService;
@@ -41,14 +42,16 @@ public class GeminiExchangeRestAPI {
     public GeminiExchangeRestAPI(Configuration cfg,
                                       MetadataAggregator metadataAggregator) throws IOException {
         if (cfg.getGeminiConfig().isEnabled()) {
+            LOG.info("Initializing {}ExchangeRestAPI.", exchangeName);
+
             ExchangeSpecification exSpec = new GeminiExchange().getDefaultExchangeSpecification();
             exSpec.setApiKey(cfg.getGeminiConfig().getApiKey());
             exSpec.setSecretKey(cfg.getGeminiConfig().getSecretKey());
 
-            exchange = ExchangeFactory.INSTANCE.createExchange(exSpec);
-            accountService = (GeminiAccountService)exchange.getAccountService();
-            tradeService = (GeminiTradeService)exchange.getTradeService();
-            marketDataService = (GeminiMarketDataService)exchange.getMarketDataService();
+            exchangeInstance = ExchangeFactory.INSTANCE.createExchange(exSpec);
+            accountService = (GeminiAccountService)exchangeInstance.getAccountService();
+            tradeService = (GeminiTradeService)exchangeInstance.getTradeService();
+            marketDataService = (GeminiMarketDataService)exchangeInstance.getMarketDataService();
 
             this.metadataAggregator = metadataAggregator;
 
@@ -57,23 +60,44 @@ public class GeminiExchangeRestAPI {
             refreshFees();
             refreshAccountInfo();
         } else {
-            LOG.info("GeminiRestAPI is disabled"); //TODO: Replace with exception?
+            LOG.info("{}RestAPI is disabled", exchangeName); //TODO: Replace with exception?
         }
     }
 
-    public void refreshProducts() throws IOException {
-        metadataMap = exchange.getExchangeMetaData().getCurrencyPairs(); //NOTE: trading fees are not correct
-        metadataAggregator.upsertMetadata(GEMINI, metadataMap);
+    @Override
+    public domain.constants.Exchange getExchangeName() {
+        return exchangeName;
     }
 
+    @Override
+    public void refreshProducts() throws IOException {
+        LOG.info("Refreshing {} Product Info.", exchangeName);
+
+        exchangeInstance.remoteInit();
+        metadataMap = exchangeInstance.getExchangeMetaData().getCurrencyPairs(); //NOTE: trading fees are not correct
+        metadataAggregator.upsertMetadata(GEMINI, metadataMap);
+
+        LOG.debug(metadataMap.toString());
+    }
+
+    @Override
     public void refreshFees() throws IOException {
+        LOG.info("Refreshing {} Fee Info.", exchangeName);
+
         feeMap = accountService.getDynamicTradingFees();
         metadataAggregator.upsertFeeMap(GEMINI, feeMap);
+
+        LOG.debug(feeMap.toString());
     }
 
+    @Override
     public void refreshAccountInfo() throws IOException {
+        LOG.info("Refreshing {} Account Info.", exchangeName);
+
         accountInfo = accountService.getAccountInfo();
         metadataAggregator.upsertAccountInfo(GEMINI, accountInfo);
+
+        LOG.debug(accountInfo.toString());
     }
 
     public Map<CurrencyPair, Fee> getFees() throws Exception {

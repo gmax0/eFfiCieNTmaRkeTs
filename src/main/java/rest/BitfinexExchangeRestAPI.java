@@ -21,12 +21,13 @@ import services.MetadataAggregator;
 import java.io.IOException;
 import java.util.Map;
 
-import static constants.Exchange.BITFINEX;
+import static domain.constants.Exchange.BITFINEX;
 
-public class BitfinexExchangeRestAPI {
+public class BitfinexExchangeRestAPI implements ExchangeRestAPI {
     private static final Logger LOG = LoggerFactory.getLogger(BitfinexExchangeRestAPI.class);
 
-    private Exchange exchange;
+    private final domain.constants.Exchange exchangeName = BITFINEX;
+    private Exchange exchangeInstance;
     private BitfinexAccountService accountService;
     private BitfinexTradeService tradeService;
     private BitfinexMarketDataService marketDataService;
@@ -41,15 +42,17 @@ public class BitfinexExchangeRestAPI {
     public BitfinexExchangeRestAPI(Configuration cfg,
                                    MetadataAggregator metadataAggregator) throws IOException {
         if (cfg.getBitfinexConfig().isEnabled()) {
+            LOG.info("Initializing {}ExchangeRestAPI.", exchangeName);
+
             ExchangeSpecification exSpec = new BitfinexExchange().getDefaultExchangeSpecification();
 
             exSpec.setSecretKey(cfg.getBitfinexConfig().getSecretKey());
             exSpec.setApiKey(cfg.getBitfinexConfig().getApiKey());
 
-            exchange = ExchangeFactory.INSTANCE.createExchange(exSpec);
-            accountService = (BitfinexAccountService)exchange.getAccountService();
-            tradeService = (BitfinexTradeService)exchange.getTradeService();
-            marketDataService = (BitfinexMarketDataService)exchange.getMarketDataService();
+            exchangeInstance = ExchangeFactory.INSTANCE.createExchange(exSpec);
+            accountService = (BitfinexAccountService)exchangeInstance.getAccountService();
+            tradeService = (BitfinexTradeService)exchangeInstance.getTradeService();
+            marketDataService = (BitfinexMarketDataService)exchangeInstance.getMarketDataService();
 
             this.metadataAggregator = metadataAggregator;
 
@@ -66,23 +69,44 @@ public class BitfinexExchangeRestAPI {
             refreshFees();
             refreshAccountInfo();
         } else {
-            LOG.info("BitfinexRestAPI is disabled"); //TODO: Replace with exception?
+            LOG.info("{}ExchangeRestAPI is diabled", exchangeName);
         }
     }
 
-    public void refreshProducts() throws IOException {
-        metadataMap = exchange.getExchangeMetaData().getCurrencyPairs(); //NOTE: trading fees are not correct
-        metadataAggregator.upsertMetadata(BITFINEX, metadataMap);
+    @Override
+    public domain.constants.Exchange getExchangeName() {
+        return exchangeName;
     }
 
+    @Override
+    public void refreshProducts() throws IOException {
+        LOG.info("Refreshing {} Product Info.", exchangeName);
+
+        exchangeInstance.remoteInit();
+        metadataMap = exchangeInstance.getExchangeMetaData().getCurrencyPairs(); //NOTE: trading fees are not correct
+        metadataAggregator.upsertMetadata(BITFINEX, metadataMap);
+
+        LOG.debug(metadataMap.toString());
+    }
+
+    @Override
     public void refreshFees() throws IOException {
+        LOG.info("Refreshing {} Fee Info.", exchangeName);
+
         feeMap = accountService.getDynamicTradingFees();
         metadataAggregator.upsertFeeMap(BITFINEX, feeMap);
+
+        LOG.debug(feeMap.toString());
     }
 
+    @Override
     public void refreshAccountInfo() throws IOException {
+        LOG.info("Refreshing {} Account Info.", exchangeName);
+
         accountInfo = accountService.getAccountInfo();
         metadataAggregator.upsertAccountInfo(BITFINEX, accountInfo);
+
+        LOG.debug(accountInfo.toString());
     }
 
     public Map<CurrencyPair, Fee> getFees() throws Exception {

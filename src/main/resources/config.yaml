@@ -2,9 +2,12 @@
 strategies:
   n_angular:
     enabled: false
-  oscillation:
+  spatial:
     enabled: false
-    min_gain: .002
+    min_gain: .0005
+  #  min_gain: .002
+    cache_time: 15
+
 
 exchange:
   coinbase_pro:
@@ -15,12 +18,14 @@ exchange:
         - "BTC_USD"
         - "ETH_USD"
         - "LTC_USD"
+        - "ETH_BTC"
     api:
-      refresh_rate: 1
+      refresh_rate: 60
       credentials:
         api_key: "${env:COINBASEPRO_API_KEY}"
         secret_key: "${env:COINBASEPRO_SECRET_KEY}"
         passphrase: "${env:COINBASEPRO_PASSPHRASE}"
+      funding:
   kraken:
     enabled: true
     websocket:
@@ -28,20 +33,24 @@ exchange:
       currency_pairs:
         - "BTC_USD"
         - "ETH_USD"
+        - "LTC_USD"
+        - "ETH_BTC"
     api:
-      refresh_rate: 1
+      refresh_rate: 60
       credentials:
         api_key: "${env:KRAKEN_API_KEY}"
         secret_key: "${env:KRAKEN_SECRET_KEY}"
   bitfinex:
-    enabled: true
+    enabled: false
     websocket:
       depth: 25 #1, 25, 100
       currency_pairs:
         - "BTC_USD"
         - "ETH_USD"
+        - "LTC_USD"
+        - "ETH_BTC"
     api:
-      refresh_rate: 1
+      refresh_rate: 60
       credentials:
         api_key: "${env:BITFINEX_API_KEY}"
         secret_key: "${env:BITFINEX_SECRET_KEY}"
@@ -51,8 +60,11 @@ exchange:
       depth: 10
       currency_pairs:
         - "BTC_USD"
+        - "ETH_USD"
+        - "LTC_USD"
+        - "ETH_BTC"
     api:
-      refresh_rate: 1
+      refresh_rate: 60
       credentials:
         api_key: "${env:GEMINI_API_KEY}"
         secret_key: "${env:GEMINI_SECRET_KEY}"

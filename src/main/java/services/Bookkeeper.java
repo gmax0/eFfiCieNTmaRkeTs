@@ -2,7 +2,7 @@ package services;
 
 import buffer.events.OrderBookEvent;
 import com.lmax.disruptor.EventHandler;
-import constants.Exchange;
+import domain.constants.Exchange;
 import org.knowm.xchange.currency.CurrencyPair;
 import org.knowm.xchange.dto.marketdata.OrderBook;
 import org.slf4j.Logger;
@@ -27,7 +27,7 @@ public class Bookkeeper implements EventHandler<OrderBookEvent> {
     }
 
     public void upsertOrderBook(Exchange exchange, CurrencyPair currencyPair, OrderBook orderBook) {
-//        LOG.debug("This is my upsert thread");
+//        LOG.info("This is my upsert thread");
         orderBooks.computeIfAbsent(exchange, (k) -> {
             return new HashMap<>();
         });

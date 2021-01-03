@@ -5,14 +5,15 @@ import com.lmax.disruptor.SleepingWaitStrategy;
 import com.lmax.disruptor.dsl.Disruptor;
 import buffer.events.OrderBookEvent;
 import com.lmax.disruptor.dsl.ProducerType;
-import constants.Exchange;
+import domain.constants.Exchange;
 import lombok.Builder;
 import org.knowm.xchange.currency.CurrencyPair;
 import org.knowm.xchange.dto.marketdata.OrderBook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import services.Bookkeeper;
-import services.OscillationArbitrager;
+import services.SpatialArbitrager;
+import util.ThreadFactory;
 
 /**
  * Disruptor-backed Buffer exclusively used for OrderBookEvents
@@ -22,12 +23,12 @@ import services.OscillationArbitrager;
 public class OrderBookBuffer {
 
     private static Logger LOG = LoggerFactory.getLogger(OrderBookBuffer.class);
-    private static final String bufferName = "orderbook-buffer";
+    private static final String bufferName = "orderbookBufferConsumer";
     private Disruptor<OrderBookEvent> disruptor;
     private RingBuffer ringBuffer;
 
     @Builder
-    public OrderBookBuffer(Bookkeeper bookkeeper, OscillationArbitrager oscillationArbitrager) {
+    public OrderBookBuffer(SpatialArbitrager spatialArbitrager) {
         //TODO: configurize disruptor parameters
         this.disruptor = new Disruptor(
                 OrderBookEvent::new,
@@ -36,13 +37,16 @@ public class OrderBookBuffer {
                 ProducerType.MULTI,
                 new SleepingWaitStrategy());
 
-        disruptor.handleEventsWith(bookkeeper, oscillationArbitrager);
+//        disruptor.handleEventsWith(bookkeeper, oscillationArbitrager);
+//        disruptor.handleEventsWith(bookkeeper);
+        disruptor.handleEventsWith(spatialArbitrager);
 //        disruptor.handleEventsWith(bookkeeper, bookkeeper);
 //        disruptor.after(bookkeeper);
         disruptor.setDefaultExceptionHandler(new ExceptionHandler<>());
 
         this.ringBuffer = disruptor.getRingBuffer();
 
+        LOG.info("Instantiated OrderBookBuffer");
     }
 
     public void insert(OrderBook orderBook, Exchange exchange, CurrencyPair currencyPair) {
@@ -50,13 +54,13 @@ public class OrderBookBuffer {
     }
 
     public void start() {
-        LOG.info("Starting disruptor.");
         disruptor.start();
+        LOG.info("Started OrderBookBuffer disruptor.");
     }
 
     public void shutdown() {
-        LOG.info("Shutting down disruptor.");
         disruptor.shutdown();
+        LOG.info("Shut down OrderBookBuffer disruptor.");
     }
 
     private class ExceptionHandler<OrderBookEvent> implements com.lmax.disruptor.ExceptionHandler<OrderBookEvent> {

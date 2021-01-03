@@ -2,7 +2,6 @@ package streams;
 
 import buffer.OrderBookBuffer;
 import config.Configuration;
-import info.bitrich.xchangestream.coinbasepro.CoinbaseProStreamingExchange;
 import info.bitrich.xchangestream.core.ProductSubscription;
 import info.bitrich.xchangestream.core.StreamingExchange;
 import info.bitrich.xchangestream.core.StreamingExchangeFactory;
@@ -16,8 +15,7 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 
-import static constants.Exchange.COINBASE_PRO;
-import static constants.Exchange.KRAKEN;
+import static domain.constants.Exchange.KRAKEN;
 
 public class KrakenExchangeStream {
 
