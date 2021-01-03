@@ -9,6 +9,7 @@ import org.knowm.xchange.currency.CurrencyPair;
 import java.math.BigDecimal;
 
 import static org.junit.Assert.*;
+import static org.knowm.xchange.dto.Order.OrderType.BID;
 
 public class TradeTest {
 
@@ -17,7 +18,7 @@ public class TradeTest {
         Trade trade1 = Trade.builder()
                 .exchange(Exchange.COINBASE_PRO)
                 .currencyPair(CurrencyPair.BTC_USD)
-                .orderActionType(OrderActionType.BID)
+                .orderActionType(BID)
                 .orderType(OrderType.LIMIT)
                 .price(new BigDecimal(100))
                 .amount(new BigDecimal(1.0))
@@ -25,7 +26,7 @@ public class TradeTest {
         Trade trade2 = Trade.builder()
                 .exchange(Exchange.COINBASE_PRO)
                 .currencyPair(CurrencyPair.BTC_USD)
-                .orderActionType(OrderActionType.BID)
+                .orderActionType(BID)
                 .orderType(OrderType.LIMIT)
                 .price(new BigDecimal(100))
                 .amount(new BigDecimal(1.0))
@@ -39,7 +40,7 @@ public class TradeTest {
         Trade trade1 = Trade.builder()
                 .exchange(Exchange.COINBASE_PRO)
                 .currencyPair(CurrencyPair.BTC_USD)
-                .orderActionType(OrderActionType.BID)
+                .orderActionType(BID)
                 .orderType(OrderType.LIMIT)
                 .price(new BigDecimal(100))
                 .amount(new BigDecimal(1.0))
@@ -47,7 +48,7 @@ public class TradeTest {
         Trade trade2 = Trade.builder()
                 .exchange(Exchange.BITFINEX)
                 .currencyPair(CurrencyPair.BTC_USD)
-                .orderActionType(OrderActionType.BID)
+                .orderActionType(BID)
                 .orderType(OrderType.LIMIT)
                 .price(new BigDecimal(100))
                 .amount(new BigDecimal(1.0))

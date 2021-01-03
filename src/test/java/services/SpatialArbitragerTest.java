@@ -11,6 +11,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
+import services.arbitrage.SpatialArbitrager;
 import testUtils.OrderBookProvider;
 
 import java.math.BigDecimal;

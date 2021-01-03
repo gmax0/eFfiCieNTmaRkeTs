@@ -1,39 +1,27 @@
 package buffer.events;
 
-import com.lmax.disruptor.EventTranslatorOneArg;
+import com.lmax.disruptor.EventTranslatorVararg;
 import domain.Trade;
-import domain.constants.Exchange;
-import domain.constants.OrderActionType;
-import domain.constants.OrderType;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.knowm.xchange.currency.CurrencyPair;
-
-import java.math.BigDecimal;
 
 @NoArgsConstructor
 @Setter
 @Getter
 public class TradeEvent {
 
-    private Exchange exchange;
-    private CurrencyPair currencyPair;
-    private OrderActionType orderActionType;
-    private OrderType orderType;
-    private BigDecimal price;
-    private BigDecimal amount;
+    private Trade trade1;
+    private Trade trade2;
+    private Trade trade3;
 
-    public static final EventTranslatorOneArg<TradeEvent, Trade> TRANSLATOR
-            = new EventTranslatorOneArg<TradeEvent, Trade>() {
+    public static final EventTranslatorVararg<TradeEvent> TRANSLATOR
+            = new EventTranslatorVararg<TradeEvent>() {
         @Override
-        public void translateTo(TradeEvent tradeEvent, long l, Trade trade) {
-            tradeEvent.setExchange(trade.getExchange());
-            tradeEvent.setCurrencyPair(trade.getCurrencyPair());
-            tradeEvent.setOrderActionType(trade.getOrderActionType());
-            tradeEvent.setOrderType(trade.getOrderType());
-            tradeEvent.setPrice(trade.getPrice());
-            tradeEvent.setAmount(trade.getAmount());
+        public void translateTo(TradeEvent tradeEvent, long l, Object... trades) {
+            tradeEvent.setTrade1((Trade)trades[0]);
+            tradeEvent.setTrade2((Trade)trades[1]);
+            tradeEvent.setTrade3((Trade)trades[2]);
         }
     };
 }

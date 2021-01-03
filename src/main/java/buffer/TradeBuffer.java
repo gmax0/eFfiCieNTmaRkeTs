@@ -47,8 +47,12 @@ public class TradeBuffer {
         this.ringBuffer = disruptor.getRingBuffer();
     }
 
-    public void insert(Trade trade) {
-        ringBuffer.publishEvent(TradeEvent.TRANSLATOR, trade);
+    public void insert(Trade trade1, Trade trade2) {
+        ringBuffer.publishEvent(TradeEvent.TRANSLATOR, trade1, trade2);
+    }
+
+    public void insert(Trade trade1, Trade trade2, Trade trade3) {
+        ringBuffer.publishEvent(TradeEvent.TRANSLATOR, trade1, trade2, trade3);
     }
 
     public void start() {

@@ -23,7 +23,7 @@
             <AppenderRef ref="ExchangeRestAPI"/>
         </logger>
 
-        <logger name="services.SpatialArbitrager" level="info">
+        <logger name="services.arbitrage.SpatialArbitrager" level="info">
             <AppenderRef ref="SpatialArbitrager"/>
         </logger>
 

@@ -1,10 +1,12 @@
 package rest;
 
 import config.Configuration;
+import domain.Trade;
 import org.knowm.xchange.Exchange;
 import org.knowm.xchange.ExchangeFactory;
 import org.knowm.xchange.ExchangeSpecification;
 import org.knowm.xchange.coinbasepro.CoinbaseProExchange;
+import org.knowm.xchange.coinbasepro.dto.trade.CoinbaseProPlaceLimitOrder;
 import org.knowm.xchange.coinbasepro.service.CoinbaseProAccountService;
 import org.knowm.xchange.coinbasepro.service.CoinbaseProMarketDataService;
 import org.knowm.xchange.coinbasepro.service.CoinbaseProTradeService;
@@ -14,6 +16,7 @@ import org.knowm.xchange.dto.account.AccountInfo;
 import org.knowm.xchange.dto.account.Balance;
 import org.knowm.xchange.dto.account.Fee;
 import org.knowm.xchange.dto.meta.CurrencyPairMetaData;
+import org.knowm.xchange.dto.trade.LimitOrder;
 import org.knowm.xchange.service.trade.params.orders.OpenOrdersParams;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -111,18 +114,17 @@ public class CoinbaseProExchangeRestAPI implements ExchangeRestAPI {
         LOG.debug(accountInfo.toString());
     }
 
-    public Balance getBalance(Currency currency) throws Exception {
-        return accountInfo.getWallet().getBalance(currency);
+    public String submitTrade(Trade trade) throws IOException {
+        LOG.info("Submitting Trade: {}", trade);
+        switch (trade.getOrderType()) {
+            case STOP:
+                return tradeService.placeStopOrder(trade.toStopOrder());
+            case LIMIT:
+                return tradeService.placeLimitOrder(trade.toLimitOrder());
+            case MARKET:
+                return tradeService.placeMarketOrder(trade.toMarketOrder());
+        }
+        LOG.warn("Trade order type not supported: {}", trade.getOrderType());
+        return null;
     }
-
-    /*
-    public void submitBuyLimitOrder() throws Exception {
-        return tradeService.placeLimitOrder(new LimitOrder());
-    }
-
-    public void submitSellLimitOrder() {
-
-    }
-
-     */
 }

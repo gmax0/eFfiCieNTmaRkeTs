@@ -11,8 +11,7 @@ import org.knowm.xchange.currency.CurrencyPair;
 import org.knowm.xchange.dto.marketdata.OrderBook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import services.Bookkeeper;
-import services.SpatialArbitrager;
+import services.arbitrage.SpatialArbitrager;
 import util.ThreadFactory;
 
 /**
@@ -37,10 +36,7 @@ public class OrderBookBuffer {
                 ProducerType.MULTI,
                 new SleepingWaitStrategy());
 
-//        disruptor.handleEventsWith(bookkeeper, oscillationArbitrager);
-//        disruptor.handleEventsWith(bookkeeper);
         disruptor.handleEventsWith(spatialArbitrager);
-//        disruptor.handleEventsWith(bookkeeper, bookkeeper);
 //        disruptor.after(bookkeeper);
         disruptor.setDefaultExceptionHandler(new ExceptionHandler<>());
 

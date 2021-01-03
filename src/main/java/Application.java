@@ -1,6 +1,5 @@
 import buffer.OrderBookBuffer;
 import services.TradePublisher;
-import streams.BitfinexExchangeStream;
 import streams.CoinbaseProExchangeStream;
 import streams.GeminiExchangeStream;
 import streams.KrakenExchangeStream;
@@ -15,9 +14,8 @@ import rest.CoinbaseProExchangeRestAPI;
 import rest.GeminiExchangeRestAPI;
 import rest.KrakenExchangeRestAPI;
 import rest.task.RestAPIRefreshTask;
-import services.Bookkeeper;
 import services.MetadataAggregator;
-import services.SpatialArbitrager;
+import services.arbitrage.SpatialArbitrager;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;

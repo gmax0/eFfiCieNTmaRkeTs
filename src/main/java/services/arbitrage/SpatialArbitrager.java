@@ -1,4 +1,4 @@
-package services;
+package services.arbitrage;
 
 import buffer.TradeBuffer;
 import buffer.events.OrderBookEvent;
@@ -6,13 +6,12 @@ import com.lmax.disruptor.EventHandler;
 import config.Configuration;
 import domain.Trade;
 import domain.constants.Exchange;
-import domain.constants.OrderActionType;
-import domain.constants.OrderType;
 import org.apache.commons.lang3.time.StopWatch;
 import org.knowm.xchange.currency.CurrencyPair;
 import org.knowm.xchange.dto.marketdata.OrderBook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import services.MetadataAggregator;
 import util.TradeCache;
 
 import java.math.BigDecimal;
@@ -21,9 +20,9 @@ import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static domain.constants.OrderActionType.ASK;
-import static domain.constants.OrderActionType.BID;
 import static domain.constants.OrderType.LIMIT;
+import static org.knowm.xchange.dto.Order.OrderType.ASK;
+import static org.knowm.xchange.dto.Order.OrderType.BID;
 
 /**
  *
@@ -206,8 +205,7 @@ public class SpatialArbitrager implements EventHandler<OrderBookEvent> {
                                 currencyPair, ex2HighestBidVolume, ex1.key, ex1EffectivePrice, ex2HighestBidVolume, ex2.key, ex2EffectivePrice);
                         LOG.info("With fees calculated, Cost To Buy: {} , Amount Sold: {}, Profit: {}",
                                 costToBuy, totalSold, totalSold.subtract(costToBuy));
-                        tradeBuffer.insert(buyLow);
-                        tradeBuffer.insert(sellHigh);
+                        tradeBuffer.insert(buyLow, sellHigh);
                     }
                 }
             }

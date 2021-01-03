@@ -16,6 +16,8 @@ import java.util.concurrent.TimeUnit;
 
 import static java.lang.Thread.sleep;
 import static org.junit.Assert.*;
+import static org.knowm.xchange.dto.Order.OrderType.ASK;
+import static org.knowm.xchange.dto.Order.OrderType.BID;
 
 public class TradeCacheTest {
 
@@ -31,7 +33,7 @@ public class TradeCacheTest {
         Trade trade1 = Trade.builder()
                 .exchange(Exchange.COINBASE_PRO)
                 .currencyPair(CurrencyPair.BTC_USD)
-                .orderActionType(OrderActionType.BID)
+                .orderActionType(BID)
                 .orderType(OrderType.LIMIT)
                 .price(new BigDecimal(100))
                 .amount(new BigDecimal(1.0))
@@ -40,7 +42,7 @@ public class TradeCacheTest {
         Trade trade2 = Trade.builder()
                 .exchange(Exchange.BITFINEX)
                 .currencyPair(CurrencyPair.BTC_USD)
-                .orderActionType(OrderActionType.ASK)
+                .orderActionType(ASK)
                 .orderType(OrderType.LIMIT)
                 .price(new BigDecimal(101))
                 .amount(new BigDecimal(1.0))
@@ -60,7 +62,7 @@ public class TradeCacheTest {
         Trade trade1 = Trade.builder()
                 .exchange(Exchange.COINBASE_PRO)
                 .currencyPair(CurrencyPair.BTC_USD)
-                .orderActionType(OrderActionType.BID)
+                .orderActionType(BID)
                 .orderType(OrderType.LIMIT)
                 .price(new BigDecimal(100))
                 .amount(new BigDecimal(1.0))
@@ -69,7 +71,7 @@ public class TradeCacheTest {
         Trade trade2 = Trade.builder()
                 .exchange(Exchange.BITFINEX)
                 .currencyPair(CurrencyPair.BTC_USD)
-                .orderActionType(OrderActionType.ASK)
+                .orderActionType(ASK)
                 .orderType(OrderType.LIMIT)
                 .price(new BigDecimal(101))
                 .amount(new BigDecimal(1.0))
@@ -90,7 +92,7 @@ public class TradeCacheTest {
         Trade trade1 = Trade.builder()
                 .exchange(Exchange.COINBASE_PRO)
                 .currencyPair(CurrencyPair.BTC_USD)
-                .orderActionType(OrderActionType.BID)
+                .orderActionType(BID)
                 .orderType(OrderType.LIMIT)
                 .price(new BigDecimal(100))
                 .amount(new BigDecimal(1.0))
@@ -99,7 +101,7 @@ public class TradeCacheTest {
         Trade trade2 = Trade.builder()
                 .exchange(Exchange.BITFINEX)
                 .currencyPair(CurrencyPair.BTC_USD)
-                .orderActionType(OrderActionType.ASK)
+                .orderActionType(ASK)
                 .orderType(OrderType.LIMIT)
                 .price(new BigDecimal(101))
                 .amount(new BigDecimal(1.0))
