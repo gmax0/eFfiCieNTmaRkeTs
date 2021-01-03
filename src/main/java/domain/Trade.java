@@ -9,6 +9,8 @@ import lombok.Setter;
 import org.knowm.xchange.currency.CurrencyPair;
 
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.Objects;
 
 @Getter
 @Setter
@@ -20,4 +22,12 @@ public class Trade {
     private OrderType orderType;
     private BigDecimal price;
     private BigDecimal amount;
+
+    //For Internal Use
+    private Instant timeDiscovered;
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(exchange, currencyPair, orderActionType, orderType, price, amount);
+    }
 }

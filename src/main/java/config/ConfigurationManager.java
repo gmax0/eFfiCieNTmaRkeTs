@@ -23,9 +23,10 @@ public class ConfigurationManager {
             LOG.debug(k);
         });
         config = Configuration.builder()
-                .oscillationArbitragerConfig(Configuration.OscillationArbitragerConfig.builder()
-                        .enabled(yamlConfiguration.getBoolean("strategies.oscillation.enabled"))
-                        .minGain(yamlConfiguration.getBigDecimal("strategies.oscillation.min_gain"))
+                .spatialArbitragerConfig(Configuration.SpatialArbitragerConfig.builder()
+                        .enabled(yamlConfiguration.getBoolean("strategies.spatial.enabled"))
+                        .minGain(yamlConfiguration.getBigDecimal("strategies.spatial.min_gain"))
+                        .cacheTime(yamlConfiguration.getBigDecimal("strategies.spatial.cache_time"))
                         .build())
                 .coinbaseProConfig(Configuration.CoinbaseProConfig.builder()
                         .enabled(yamlConfiguration.getBoolean("exchange.coinbase_pro.enabled"))

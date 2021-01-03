@@ -28,7 +28,7 @@ public class SpatialArbitragerTest {
 
     @Spy
     Configuration mockConfig = Configuration.builder()
-            .oscillationArbitragerConfig(Configuration.OscillationArbitragerConfig.builder()
+            .spatialArbitragerConfig(Configuration.SpatialArbitragerConfig.builder()
                     .minGain(new BigDecimal(.001))
                     .build())
             .build();

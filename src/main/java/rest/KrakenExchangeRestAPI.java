@@ -116,6 +116,10 @@ public class KrakenExchangeRestAPI implements ExchangeRestAPI {
         LOG.debug(accountInfo.toString());
     }
 
+    public void refreshWithdrawalInfo() throws IOException {
+
+    }
+
     public Map<CurrencyPair, Fee> getFees() throws Exception {
         return feeMap;
     }

@@ -13,9 +13,11 @@ import org.knowm.xchange.currency.CurrencyPair;
 import org.knowm.xchange.dto.marketdata.OrderBook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import util.TradeCache;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -48,18 +50,22 @@ public class SpatialArbitrager implements EventHandler<OrderBookEvent> {
     final private Map<CurrencyPair, TreeSet<Entry<Exchange, OrderBook>>> orderBooksAscendingAsks = new ConcurrentHashMap<>();
     final private Map<CurrencyPair, TreeSet<Entry<Exchange, OrderBook>>> orderBooksDescendingBids = new ConcurrentHashMap<>();
 
-    private BigDecimal minGain;
+    //TODO: Come up with something more elegant
+    private TradeCache tradeCache;
+    private BigDecimal cacheTime;
 
-    private StopWatch stopWatch;
+    private BigDecimal minGain;
+    private StopWatch stopWatch = new StopWatch();
 
     public SpatialArbitrager(Configuration cfg,
                              MetadataAggregator metadataAggregator,
                              TradeBuffer tradeBuffer) {
-        this.minGain = cfg.getOscillationArbitragerConfig().getMinGain();
+        this.minGain = cfg.getSpatialArbitragerConfig().getMinGain();
+        this.cacheTime = cfg.getSpatialArbitragerConfig().getCacheTime();
+        this.tradeCache = new TradeCache(this.cacheTime);
 
         this.metadataAggregator = metadataAggregator;
         this.tradeBuffer = tradeBuffer;
-        this.stopWatch = new StopWatch();
     }
 
     public class Entry<K, V> implements Map.Entry<K, V> {
@@ -167,54 +173,46 @@ public class SpatialArbitrager implements EventHandler<OrderBookEvent> {
                     BigDecimal ex2HighestBidVolume = ex2.value.getBids().get(0).getOriginalAmount();
                     BigDecimal ex2EffectivePrice = ex2HighestBid;
 
-
-                    /*
-                    BigDecimal netBuyAmount = ex1EffectivePrice.divide(ex2HighestBidVolume, 5, RoundingMode.HALF_EVEN).multiply(BigDecimal.ONE.subtract(ex1TakerFee));
-                    BigDecimal netSellAmount = ex2EffectivePrice.multiply(ex2HighestBidVolume).multiply(BigDecimal.ONE.subtract(ex2TakerFee));
-
-                    if (netSellAmount.compareTo(netBuyAmount) > 0
-                            && netSellAmount.subtract(netBuyAmount).divide(netBuyAmount, 5, RoundingMode.HALF_EVEN).compareTo(minGain) >= 0) {
-                        LOG.info("Arbitrage Opportunity Detected for {} ! Buy {} units on {} at {}, Sell {} units on {} at {}",
-                                currencyPair, ex2HighestBidVolume, ex1.key, ex1EffectivePrice, ex2HighestBidVolume, ex2.key, ex2EffectivePrice);
-                        LOG.info("With fees calculated, Buy Net Amount: {}, Sell Net Amount: {}",
-                                netBuyAmount, netSellAmount);
-                    } else {
-                        LOG.debug("Nope.");
-                        break;
-                    }
-
-                     */
+                    //Check for costToBuy = 0: .02371 * .0000004 / (1 - .0026)
                     BigDecimal costToBuy = ex1EffectivePrice.multiply(ex2HighestBidVolume).divide(BigDecimal.ONE.subtract(ex1TakerFee), 5, RoundingMode.HALF_EVEN);
                     BigDecimal totalSold = ex2EffectivePrice.multiply(ex2HighestBidVolume).multiply(BigDecimal.ONE.subtract(ex2TakerFee));
 
+                    Trade buyLow = Trade.builder()
+                            .exchange(ex1.key)
+                            .currencyPair(currencyPair)
+                            .orderActionType(BID)
+                            .orderType(LIMIT)
+                            .price(ex1EffectivePrice)
+                            .amount(ex2HighestBidVolume)
+                            .timeDiscovered(Instant.now())
+                            .build();
+                    Trade sellHigh = Trade.builder()
+                            .exchange(ex2.key)
+                            .currencyPair(currencyPair)
+                            .orderActionType(ASK)
+                            .orderType(LIMIT)
+                            .price(ex2EffectivePrice)
+                            .amount(ex2HighestBidVolume)
+                            .timeDiscovered(Instant.now())
+                            .build();
+
                     if (totalSold.compareTo(costToBuy) > 0
-                            && totalSold.subtract(costToBuy).divide(costToBuy, 5, RoundingMode.HALF_EVEN).compareTo(minGain) >= 0) {
+                            && totalSold.subtract(costToBuy).divide(costToBuy, 5, RoundingMode.HALF_EVEN).compareTo(minGain) >= 0
+                            && !tradeCache.containsTrade(buyLow) && !tradeCache.containsTrade(sellHigh)) {
+                        tradeCache.insertTrade(buyLow);
+                        tradeCache.insertTrade(sellHigh);
+
                         LOG.info("Arbitrage Opportunity Detected for {} ! Buy {} units on {} at {}, Sell {} units on {} at {}",
                                 currencyPair, ex2HighestBidVolume, ex1.key, ex1EffectivePrice, ex2HighestBidVolume, ex2.key, ex2EffectivePrice);
                         LOG.info("With fees calculated, Cost To Buy: {} , Amount Sold: {}, Profit: {}",
                                 costToBuy, totalSold, totalSold.subtract(costToBuy));
-
-                        tradeBuffer.insert(Trade.builder()
-                                .exchange(ex1.key)
-                                .currencyPair(currencyPair)
-                                .orderActionType(BID)
-                                .orderType(LIMIT)
-                                .price(ex1EffectivePrice)
-                                .amount(ex2HighestBidVolume)
-                                .build());
-                        tradeBuffer.insert(Trade.builder()
-                                .exchange(ex2.key)
-                                .currencyPair(currencyPair)
-                                .orderActionType(ASK)
-                                .orderType(LIMIT)
-                                .price(ex2EffectivePrice)
-                                .amount(ex2HighestBidVolume)
-                                .build());
+                        tradeBuffer.insert(buyLow);
+                        tradeBuffer.insert(sellHigh);
                     }
                 }
             }
         } catch (Exception e) {
-            LOG.error("Exception caught while performing computation for {}", currencyPair, e);
+            LOG.error("Exception caught while performing computation for {}", currencyPair, e.getStackTrace());
         }
 
         stopWatch.suspend();
