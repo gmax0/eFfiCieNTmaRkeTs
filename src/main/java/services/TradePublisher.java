@@ -30,7 +30,9 @@ public class TradePublisher implements EventHandler<TradeEvent> {
 
         //Load the Exchange -> ExchangeRestAPI map
         for (ExchangeRestAPI exchangeRestAPI1 : exchangeRestAPI) {
-            exchangeRestAPIMap.put(exchangeRestAPI1.getExchangeName(), exchangeRestAPI1);
+            if (exchangeRestAPI1.isEnabled()) {
+                exchangeRestAPIMap.put(exchangeRestAPI1.getExchangeName(), exchangeRestAPI1);
+            }
         }
     }
 

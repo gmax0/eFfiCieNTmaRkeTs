@@ -28,6 +28,8 @@ public class GeminiExchangeRestAPI implements ExchangeRestAPI {
     private static final Logger LOG = LoggerFactory.getLogger(GeminiExchangeRestAPI.class);
 
     private final domain.constants.Exchange exchangeName = GEMINI;
+    private boolean isEnabled = false;
+
     private Exchange exchangeInstance;
     private GeminiAccountService accountService;
     private GeminiTradeService tradeService;
@@ -44,6 +46,7 @@ public class GeminiExchangeRestAPI implements ExchangeRestAPI {
                                       MetadataAggregator metadataAggregator) throws IOException {
         if (cfg.getGeminiConfig().isEnabled()) {
             LOG.info("Initializing {}ExchangeRestAPI.", exchangeName);
+            this.isEnabled = true;
 
             ExchangeSpecification exSpec = new GeminiExchange().getDefaultExchangeSpecification();
             exSpec.setApiKey(cfg.getGeminiConfig().getApiKey());
@@ -61,8 +64,13 @@ public class GeminiExchangeRestAPI implements ExchangeRestAPI {
             refreshFees();
             refreshAccountInfo();
         } else {
-            LOG.info("{}RestAPI is disabled", exchangeName); //TODO: Replace with exception?
+            LOG.warn("{}RestAPI is disabled", exchangeName);
         }
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return this.isEnabled;
     }
 
     @Override

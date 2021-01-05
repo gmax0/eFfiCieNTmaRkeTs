@@ -8,9 +8,11 @@ public class RestAPIRefreshTask implements Runnable {
     @Override
     public void run() {
         try {
-            exchangeRestAPI.refreshAccountInfo();
-            exchangeRestAPI.refreshProducts();
-            exchangeRestAPI.refreshFees();
+            if (exchangeRestAPI.isEnabled()) {
+                exchangeRestAPI.refreshAccountInfo();
+                exchangeRestAPI.refreshProducts();
+                exchangeRestAPI.refreshFees();
+            }
         } catch (Exception e) {
             Thread.currentThread().getUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), e);
         }

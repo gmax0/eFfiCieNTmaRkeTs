@@ -1,5 +1,6 @@
 import buffer.OrderBookBuffer;
 import services.TradePublisher;
+import streams.BitfinexExchangeStream;
 import streams.CoinbaseProExchangeStream;
 import streams.GeminiExchangeStream;
 import streams.KrakenExchangeStream;
@@ -48,11 +49,13 @@ public class Application {
         tradeBuffer.start();
         orderBookBuffer.start();
 
+        Thread.sleep(1000);
+
         //Setup Refresh Tasks
-        ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1, new ThreadFactory("API-Refresher"));
+        ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1, new ThreadFactory("APIRefresher"));
         scheduledExecutorService.scheduleAtFixedRate(new RestAPIRefreshTask(geminiExchangeRestAPI), 0, config.getGeminiConfig().getRefreshRate(), TimeUnit.SECONDS);
         scheduledExecutorService.scheduleAtFixedRate(new RestAPIRefreshTask(coinbaseProExchangeRestAPI), 0, config.getCoinbaseProConfig().getRefreshRate(), TimeUnit.SECONDS);
-//        scheduledExecutorService.scheduleAtFixedRate(new RestAPIRefreshTask(bitfinexExchangeRestAPI), 0, config.getBitfinexConfig().getRefreshRate(), TimeUnit.SECONDS);
+        scheduledExecutorService.scheduleAtFixedRate(new RestAPIRefreshTask(bitfinexExchangeRestAPI), 0, config.getBitfinexConfig().getRefreshRate(), TimeUnit.SECONDS);
         scheduledExecutorService.scheduleAtFixedRate(new RestAPIRefreshTask(krakenExchangeRestAPI), 0, config.getKrakenConfig().getRefreshRate(), TimeUnit.SECONDS);
 
         //Setup WebSocket Streams
@@ -62,8 +65,8 @@ public class Application {
         krakenExchangeStream.start();
         CoinbaseProExchangeStream coinbaseProExchangeStream = new CoinbaseProExchangeStream(config, orderBookBuffer);
         coinbaseProExchangeStream.start();
-//        BitfinexExchangeStream bitfinexExchangeStream = new BitfinexExchangeStream(config, orderBookBuffer);
-//        bitfinexExchangeStream.start();
+        BitfinexExchangeStream bitfinexExchangeStream = new BitfinexExchangeStream(config, orderBookBuffer);
+        bitfinexExchangeStream.start();
 
         while (true) {
             Thread.sleep(Long.MAX_VALUE);

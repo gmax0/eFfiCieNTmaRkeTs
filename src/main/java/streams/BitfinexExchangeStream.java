@@ -2,35 +2,39 @@ package streams;
 
 import buffer.OrderBookBuffer;
 import config.Configuration;
+import domain.constants.Exchange;
 import info.bitrich.xchangestream.bitfinex.BitfinexStreamingExchange;
 import info.bitrich.xchangestream.core.ProductSubscription;
-import info.bitrich.xchangestream.core.StreamingExchange;
 import info.bitrich.xchangestream.core.StreamingExchangeFactory;
-import io.reactivex.disposables.Disposable;
 import org.knowm.xchange.ExchangeSpecification;
 import org.knowm.xchange.currency.CurrencyPair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import static domain.constants.Exchange.BITFINEX;
 
-public class BitfinexExchangeStream {
+public class BitfinexExchangeStream extends AbstractExchangeStream {
     private static final Logger LOG = LoggerFactory.getLogger(BitfinexExchangeStream.class);
+    private static final Exchange exchangeName = BITFINEX;
 
-    private StreamingExchange streamingExchange;
-    private ProductSubscription productSubscription;
-    private List<Disposable> subscriptions;
+    @Override
+    Logger getLog() {
+        return LOG;
+    }
 
-    private OrderBookBuffer orderBookBuffer;
-    protected List<CurrencyPair> currencyPairs;
-    private int depth;
+    @Override
+    Exchange getExchange() {
+        return this.exchangeName;
+    }
 
     public BitfinexExchangeStream(Configuration config,
                                   OrderBookBuffer orderBookBuffer) {
         if (config.getBitfinexConfig().isEnabled()) {
+            LOG.info("Initializing {}ExchangeStream.", exchangeName);
+            this.isEnabled = true;
+
             ExchangeSpecification exchangeSpecification = new BitfinexStreamingExchange()
                     .getDefaultExchangeSpecification();
 
@@ -48,32 +52,7 @@ public class BitfinexExchangeStream {
 
             this.streamingExchange = StreamingExchangeFactory.INSTANCE.createExchange(exchangeSpecification);
         } else {
-            LOG.warn("Bitfinex is disabled."); //TODO: Add exception here?
+            LOG.warn("{}ExchangeStream is disabled.", exchangeName);
         }
-    }
-
-    public void start() {
-        LOG.info("Initiating exchange connection...");
-        this.streamingExchange.connect(productSubscription).blockingAwait();
-
-        LOG.info("Creating subscriptions...");
-        currencyPairs.stream().forEach(currencyPair -> {
-            subscriptions.add(
-                    streamingExchange.getStreamingMarketDataService()
-                            .getOrderBook(currencyPair, depth)
-                            .subscribe(
-                                    (trade) -> {
-//                                LOG.info("Trade: {}", trade);
-                                        orderBookBuffer.insert(trade, BITFINEX, currencyPair);
-                                    },
-                                    throwable -> LOG.error("Error in trade subscription", throwable)));
-        });
-    }
-
-    public void shutdown() {
-        LOG.info("Disposing subscriptions...");
-        this.subscriptions.stream().forEach(subscription -> subscription.dispose());
-        LOG.info("Disconnecting from exchange...");
-        this.streamingExchange.disconnect().blockingAwait();
     }
 }

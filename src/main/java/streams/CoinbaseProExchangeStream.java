@@ -22,6 +22,9 @@ public class CoinbaseProExchangeStream {
 
     private static final Logger LOG = LoggerFactory.getLogger(CoinbaseProExchangeStream.class);
 
+    private final domain.constants.Exchange exchangeName = COINBASE_PRO;
+    private boolean isEnabled = false;
+
     private StreamingExchange streamingExchange;
     private ProductSubscription productSubscription;
     private List<Disposable> subscriptions;
@@ -33,6 +36,9 @@ public class CoinbaseProExchangeStream {
     public CoinbaseProExchangeStream(Configuration config,
                                      OrderBookBuffer orderBookBuffer) {
         if (config.getCoinbaseProConfig().isEnabled()) {
+            LOG.info("Initializing {}ExchangeStream.", exchangeName);
+            this.isEnabled = true;
+
             ExchangeSpecification coinbaseProSpec = new CoinbaseProStreamingExchange().getDefaultExchangeSpecification();
 
             //Setup ProductSubscription
@@ -49,16 +55,17 @@ public class CoinbaseProExchangeStream {
 
             this.streamingExchange = StreamingExchangeFactory.INSTANCE.createExchange(coinbaseProSpec);
         } else {
-            LOG.warn("CoinbasePro is disabled."); //TODO: Add exception here?
+            LOG.warn("{}ExchangeStream is disabled.", exchangeName);
         }
     }
 
     public void start() {
-        LOG.info("Initiating exchange connection...");
+        LOG.info("Initiating {}ExchangeStream WSS connection...", exchangeName);
         this.streamingExchange.connect(productSubscription).blockingAwait();
 
-        LOG.info("Creating subscriptions...");
+        LOG.info("Creating {}ExchangeStream subscriptions...", exchangeName);
         currencyPairs.stream().forEach(currencyPair -> {
+            LOG.info("{}", currencyPair);
             subscriptions.add(
             streamingExchange.getStreamingMarketDataService()
                     .getOrderBook(currencyPair, depth)
@@ -72,9 +79,13 @@ public class CoinbaseProExchangeStream {
     }
 
     public void shutdown() {
-        LOG.info("Disposing subscriptions...");
-        this.subscriptions.stream().forEach(subscription -> subscription.dispose());
-        LOG.info("Disconnecting from exchange...");
-        this.streamingExchange.disconnect().blockingAwait();
+        if (this.streamingExchange.isAlive()) {
+            LOG.info("Disposing {}ExchangeStream subscriptions...", exchangeName);
+            this.subscriptions.stream().forEach(subscription -> subscription.dispose());
+            LOG.info("Disconnecting from {}ExchangeStream WSS connection...");
+            this.streamingExchange.disconnect().blockingAwait();
+        } else {
+            LOG.info("{}ExchangeStream connection is not alive. ");
+        }
     }
 }

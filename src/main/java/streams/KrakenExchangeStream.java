@@ -21,6 +21,9 @@ public class KrakenExchangeStream {
 
     private static final Logger LOG = LoggerFactory.getLogger(KrakenExchangeStream.class);
 
+    private final domain.constants.Exchange exchangeName = KRAKEN;
+    private boolean isEnabled = false;
+
     private StreamingExchange streamingExchange;
     private ProductSubscription productSubscription;
     private List<Disposable> subscriptions;
@@ -32,6 +35,9 @@ public class KrakenExchangeStream {
     public KrakenExchangeStream(Configuration config,
                                      OrderBookBuffer orderBookBuffer) {
         if (config.getKrakenConfig().isEnabled()) {
+            LOG.info("Initializing {}ExchangeStream.", exchangeName);
+            this.isEnabled = true;
+
             ExchangeSpecification krakenSpec = new KrakenStreamingExchange().getDefaultExchangeSpecification();
 
             //Setup ProductSubscription
@@ -48,22 +54,23 @@ public class KrakenExchangeStream {
 
             this.streamingExchange = StreamingExchangeFactory.INSTANCE.createExchange(krakenSpec);
         } else {
-            LOG.warn("Kraken Websocket Stream is disabled."); //TODO: Add exception here?
+            LOG.warn("{}ExchangeStream is disabled.", exchangeName);
         }
     }
 
     public void start() {
-        LOG.info("Initiating exchange connection...");
+        LOG.info("Initiating {}ExchangeStream WSS connection...", exchangeName);
         this.streamingExchange.connect(productSubscription).blockingAwait();
 
-        LOG.info("Creating subscriptions...");
+        LOG.info("Creating {}ExchangeStream subscriptions...", exchangeName);
         currencyPairs.stream().forEach(currencyPair -> {
+            LOG.info("{}", currencyPair);
             subscriptions.add(
                     streamingExchange.getStreamingMarketDataService()
                             .getOrderBook(currencyPair, depth)
                             .subscribe(
                                     (trade) -> {
-//                                LOG.info("Trade: {}", trade);
+                                        //LOG.info("Trade: {}", trade);
                                         orderBookBuffer.insert(trade, KRAKEN, currencyPair);
                                     },
                                     throwable -> LOG.error("Error in trade subscription", throwable)));
@@ -71,9 +78,13 @@ public class KrakenExchangeStream {
     }
 
     public void shutdown() {
-        LOG.info("Disposing subscriptions...");
-        this.subscriptions.stream().forEach(subscription -> subscription.dispose());
-        LOG.info("Disconnecting from exchange...");
-        this.streamingExchange.disconnect().blockingAwait();
+        if (this.streamingExchange.isAlive()) {
+            LOG.info("Disposing {}ExchangeStream subscriptions...", exchangeName);
+            this.subscriptions.stream().forEach(subscription -> subscription.dispose());
+            LOG.info("Disconnecting from {}ExchangeStream WSS connection...");
+            this.streamingExchange.disconnect().blockingAwait();
+        } else {
+            LOG.info("{}ExchangeStream connection is not alive. ");
+        }
     }
 }

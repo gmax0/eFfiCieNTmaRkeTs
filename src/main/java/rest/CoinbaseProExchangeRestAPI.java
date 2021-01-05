@@ -31,6 +31,8 @@ public class CoinbaseProExchangeRestAPI implements ExchangeRestAPI {
     private static final Logger LOG = LoggerFactory.getLogger(CoinbaseProExchangeRestAPI.class);
 
     private final domain.constants.Exchange exchangeName = COINBASE_PRO;
+    private boolean isEnabled = false;
+
     private Exchange exchangeInstance;
     private CoinbaseProAccountService accountService;
     private CoinbaseProTradeService tradeService;
@@ -54,6 +56,7 @@ public class CoinbaseProExchangeRestAPI implements ExchangeRestAPI {
                                       MetadataAggregator metadataAggregator) throws IOException {
         if (cfg.getCoinbaseProConfig().isEnabled()) {
             LOG.info("Initializing {}ExchangeRestAPI.", exchangeName);
+            this.isEnabled = true;
 
             ExchangeSpecification exSpec = new CoinbaseProExchange().getDefaultExchangeSpecification();
             exSpec.setSecretKey(cfg.getCoinbaseProConfig().getSecretKey());
@@ -74,13 +77,18 @@ public class CoinbaseProExchangeRestAPI implements ExchangeRestAPI {
             refreshFees();
             refreshAccountInfo();
         } else {
-            LOG.info("{}RestAPI is disabled", exchangeName); //TODO: Replace with exception?
+            LOG.warn("{}RestAPI is disabled", exchangeName);
         }
     }
 
     @Override
     public domain.constants.Exchange getExchangeName() {
         return exchangeName;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return this.isEnabled;
     }
 
     @Override

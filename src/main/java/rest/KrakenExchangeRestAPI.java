@@ -29,6 +29,8 @@ public class KrakenExchangeRestAPI implements ExchangeRestAPI {
     private static final Logger LOG = LoggerFactory.getLogger(KrakenExchangeRestAPI.class);
 
     private final domain.constants.Exchange exchangeName = KRAKEN;
+    private boolean isEnabled = false;
+
     private Exchange exchangeInstance;
     private KrakenAccountService accountService;
     private KrakenTradeService tradeService;
@@ -45,6 +47,7 @@ public class KrakenExchangeRestAPI implements ExchangeRestAPI {
                                    MetadataAggregator metadataAggregator) throws IOException {
         if (cfg.getKrakenConfig().isEnabled()) {
             LOG.info("Initializing {}ExchangeRestAPI.", exchangeName);
+            isEnabled = true;
 
             ExchangeSpecification exSpec = new KrakenExchange().getDefaultExchangeSpecification();
 
@@ -71,13 +74,18 @@ public class KrakenExchangeRestAPI implements ExchangeRestAPI {
             refreshFees();
             refreshAccountInfo();
         } else {
-            LOG.info("{}RestAPI is disabled", exchangeName); //TODO: Replace with exception?
+            LOG.warn("{}RestAPI is disabled", exchangeName);
         }
     }
 
     @Override
     public domain.constants.Exchange getExchangeName() {
         return exchangeName;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return this.isEnabled;
     }
 
     @Override

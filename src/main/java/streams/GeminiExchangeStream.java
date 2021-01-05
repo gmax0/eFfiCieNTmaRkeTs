@@ -21,6 +21,9 @@ public class GeminiExchangeStream {
 
     private static final Logger LOG = LoggerFactory.getLogger(CoinbaseProExchangeStream.class);
 
+    private final domain.constants.Exchange exchangeName = GEMINI;
+    private boolean isEnabled = false;
+
     private StreamingExchange streamingExchange;
     private ProductSubscription productSubscription;
     private List<Disposable> subscriptions;
@@ -31,6 +34,9 @@ public class GeminiExchangeStream {
 
     public GeminiExchangeStream(Configuration config, OrderBookBuffer orderBookBuffer) {
         if (config.getGeminiConfig().isEnabled()) {
+            LOG.info("Initializing {}ExchangeStream.", exchangeName);
+            this.isEnabled = true;
+
             ExchangeSpecification geminiSpec = new GeminiStreamingExchange().getDefaultExchangeSpecification();
 
             //Setup ProductSubscription
@@ -47,16 +53,17 @@ public class GeminiExchangeStream {
 
             this.streamingExchange = StreamingExchangeFactory.INSTANCE.createExchange(geminiSpec);
         } else {
-            LOG.warn("Gemini is disabled.");
+            LOG.warn("{}ExchangeStream is disabled.", exchangeName);
         }
     }
 
     public void start() {
-        LOG.info("Initiating exchange connection...");
+        LOG.info("Initiating {}ExchangeStream WSS connection...", exchangeName);
         this.streamingExchange.connect(productSubscription).blockingAwait();
 
-        LOG.info("Creating subscriptions...");
+        LOG.info("Creating {}ExchangeStream subscriptions...", exchangeName);
         currencyPairs.stream().forEach(currencyPair -> {
+            LOG.info("{}", currencyPair);
             subscriptions.add(
                     streamingExchange.getStreamingMarketDataService()
                             .getOrderBook(currencyPair, depth)
@@ -69,9 +76,13 @@ public class GeminiExchangeStream {
     }
 
     public void shutdown() {
-        LOG.info("Disposing subscriptions...");
-        this.subscriptions.stream().forEach(subscription -> subscription.dispose());
-        LOG.info("Disconnecting from exchange...");
-        this.streamingExchange.disconnect().blockingAwait();
+        if (this.streamingExchange.isAlive()) {
+            LOG.info("Disposing {}ExchangeStream subscriptions...", exchangeName);
+            this.subscriptions.stream().forEach(subscription -> subscription.dispose());
+            LOG.info("Disconnecting from {}ExchangeStream WSS connection...");
+            this.streamingExchange.disconnect().blockingAwait();
+        } else {
+            LOG.info("{}ExchangeStream connection is not alive. ");
+        }
     }
 }
