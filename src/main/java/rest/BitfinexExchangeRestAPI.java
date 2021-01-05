@@ -1,6 +1,7 @@
 package rest;
 
 import config.Configuration;
+import domain.Trade;
 import org.knowm.xchange.Exchange;
 import org.knowm.xchange.ExchangeFactory;
 import org.knowm.xchange.ExchangeSpecification;
@@ -109,11 +110,18 @@ public class BitfinexExchangeRestAPI implements ExchangeRestAPI {
         LOG.debug(accountInfo.toString());
     }
 
-    public Map<CurrencyPair, Fee> getFees() throws Exception {
-        return feeMap;
-    }
-
-    public Balance getBalance(Currency currency) throws Exception {
-        return accountInfo.getWallet().getBalance(currency);
+    @Override
+    public String submitTrade(Trade trade) throws IOException {
+        LOG.info("Submitting Trade: {}", trade);
+        switch (trade.getOrderType()) {
+            case STOP:
+                return tradeService.placeStopOrder(trade.toStopOrder());
+            case LIMIT:
+                return tradeService.placeLimitOrder(trade.toLimitOrder());
+            case MARKET:
+                return tradeService.placeMarketOrder(trade.toMarketOrder());
+        }
+        LOG.warn("Trade order type not supported: {}", trade.getOrderType());
+        return null;
     }
 }

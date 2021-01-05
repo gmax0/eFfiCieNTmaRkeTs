@@ -114,6 +114,7 @@ public class CoinbaseProExchangeRestAPI implements ExchangeRestAPI {
         LOG.debug(accountInfo.toString());
     }
 
+    @Override
     public String submitTrade(Trade trade) throws IOException {
         LOG.info("Submitting Trade: {}", trade);
         switch (trade.getOrderType()) {

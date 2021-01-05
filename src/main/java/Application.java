@@ -39,7 +39,7 @@ public class Application {
         BitfinexExchangeRestAPI bitfinexExchangeRestAPI = new BitfinexExchangeRestAPI(config, metadataAggregator);
         KrakenExchangeRestAPI krakenExchangeRestAPI = new KrakenExchangeRestAPI(config, metadataAggregator);
 
-        TradePublisher tradePublisher = new TradePublisher();
+        TradePublisher tradePublisher = new TradePublisher(metadataAggregator, geminiExchangeRestAPI, coinbaseProExchangeRestAPI, bitfinexExchangeRestAPI, krakenExchangeRestAPI);
         TradeBuffer tradeBuffer = new TradeBuffer(tradePublisher);
         SpatialArbitrager spatialArbitrager = new SpatialArbitrager(config, metadataAggregator, tradeBuffer);
         OrderBookBuffer orderBookBuffer = new OrderBookBuffer(spatialArbitrager);

@@ -5,6 +5,7 @@ import config.Configuration;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.knowm.xchange.dto.account.Fee;
 import org.knowm.xchange.dto.marketdata.OrderBook;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -12,6 +13,7 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 import services.arbitrage.SpatialArbitrager;
+import testUtils.MetadataAggregatorMocker;
 import testUtils.OrderBookProvider;
 
 import java.math.BigDecimal;
@@ -75,8 +77,11 @@ public class SpatialArbitragerTest {
         OrderBook orderBook1 = OrderBookProvider.getOrderBookFromCSV(BTC_USD, date, "orderBookData/custom/CUSTOM-1-bids.csv", "orderBookData/custom/CUSTOM-1-asks.csv");
         OrderBook orderBook2 = OrderBookProvider.getOrderBookFromCSV(BTC_USD, date, "orderBookData/custom/CUSTOM-2-bids.csv", "orderBookData/custom/CUSTOM-2-asks.csv");
 
-        when(mockMetadataAggregator.getMakerFee(any(), any())).thenReturn(BigDecimal.ZERO);
-        when(mockMetadataAggregator.getTakerFee(any(), any())).thenReturn(BigDecimal.ZERO);
+        MetadataAggregatorMocker.setMockFee(mockMetadataAggregator, BITFINEX, BTC_USD, new BigDecimal(0), new BigDecimal(0));
+        MetadataAggregatorMocker.setMockFee(mockMetadataAggregator, COINBASE_PRO, BTC_USD, new BigDecimal(0), new BigDecimal(0));
+
+        MetadataAggregatorMocker.setOrderMinimumVolume(mockMetadataAggregator, BITFINEX, BTC_USD, BigDecimal.ZERO);
+        MetadataAggregatorMocker.setOrderMinimumVolume(mockMetadataAggregator, COINBASE_PRO, BTC_USD, BigDecimal.ZERO);
 
         spatialArbitrager.upsertOrderBook(BITFINEX, BTC_USD, orderBook1);
         spatialArbitrager.upsertOrderBook(COINBASE_PRO, BTC_USD, orderBook2); //computeTrades() should occur on this call

@@ -31,6 +31,8 @@ public class Trade {
 
     //For Internal Use
     private Instant timeDiscovered;
+    private BigDecimal fee;
+    private Boolean feeCurrencyFlag; //Fee to be deducted in quote/counter or base currency. T = base, false = quote/counter
 
     public StopOrder toStopOrder() {
         return new StopOrder(

@@ -47,6 +47,11 @@ public class TradeBuffer {
         this.ringBuffer = disruptor.getRingBuffer();
     }
 
+    /**
+     * Publishes a TradeEvent containing two trades to the RingBuffer. Note the arguments' positional requirements.
+     * @param trade1 - Trade corresponding to the BUY order at a lower price
+     * @param trade2 - Trade corresponding to the SELL order at a higher price
+     */
     public void insert(Trade trade1, Trade trade2) {
         ringBuffer.publishEvent(TradeEvent.TRANSLATOR, trade1, trade2);
     }
@@ -69,7 +74,7 @@ public class TradeBuffer {
         @Override
         public void handleEventException(Throwable ex, long sequence, Object event) {
             LOG.error("Exception occurred while processing a {}.",
-                    ((OrderBookEvent) event).getClass().getSimpleName(), ex);
+                    ((TradeEvent) event).getClass().getSimpleName(), ex);
         }
 
         @Override

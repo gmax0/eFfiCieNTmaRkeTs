@@ -8,11 +8,15 @@
             <PatternLayout pattern="%d{yyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
         </File>
 
-        <File name="ExchangeRestAPI" fileName="ExchangeRestAPI.log" immediateFlush="true" append="false">
+        <File name="ExchangeRestAPI" fileName="ExchangeRestAPI.log" immediateFlush="false" append="false">
             <PatternLayout pattern="%d{yyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
         </File>
 
-        <File name="SpatialArbitrager" fileName="SpatialArbitrager.log" immediateFlush="true" append="false">
+        <File name="SpatialArbitrager" fileName="SpatialArbitrager.log" immediateFlush="false" append="false">
+            <PatternLayout pattern="%d{yyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
+        </File>
+
+        <File name="TradePublisher" fileName="TradePublisher.log" immediateFlush="false" append="false">
             <PatternLayout pattern="%d{yyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
         </File>
     </Appenders>
@@ -25,6 +29,10 @@
 
         <logger name="services.arbitrage.SpatialArbitrager" level="info">
             <AppenderRef ref="SpatialArbitrager"/>
+        </logger>
+
+        <logger name="services.TradePublisher" level="info">
+            <AppenderRef ref="TradePublisher"/>
         </logger>
 
         <Root level="info">

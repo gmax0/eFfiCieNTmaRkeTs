@@ -1,8 +1,10 @@
 package services;
 
 import domain.constants.Exchange;
+import org.knowm.xchange.currency.Currency;
 import org.knowm.xchange.currency.CurrencyPair;
 import org.knowm.xchange.dto.account.AccountInfo;
+import org.knowm.xchange.dto.account.Balance;
 import org.knowm.xchange.dto.account.Fee;
 import org.knowm.xchange.dto.meta.CurrencyPairMetaData;
 import org.slf4j.Logger;
@@ -27,20 +29,11 @@ public class MetadataAggregator {
         aggregatedFee.put(exchange, feeMap);
     }
 
-    public BigDecimal getMakerFee(Exchange exchange, CurrencyPair currencyPair) {
+    public Fee getFees(Exchange exchange, CurrencyPair currencyPair) {
         if (aggregatedFee.containsKey(exchange) && aggregatedFee.get(exchange).containsKey(currencyPair)) {
-            return aggregatedFee.get(exchange).get(currencyPair).getMakerFee();
+            return aggregatedFee.get(exchange).get(currencyPair);
         } else {
-            LOG.warn("Unable to locate maker fee for {} {}", exchange, currencyPair);
-            return null;
-        }
-    }
-
-    public BigDecimal getTakerFee(Exchange exchange, CurrencyPair currencyPair) {
-        if (aggregatedFee.containsKey(exchange) && aggregatedFee.get(exchange).containsKey(currencyPair)) {
-            return aggregatedFee.get(exchange).get(currencyPair).getTakerFee();
-        } else {
-            LOG.warn("Unable to locate taker fee for {} {}", exchange, currencyPair);
+            LOG.warn("Unable to fees for {} {}", exchange, currencyPair);
             return null;
         }
     }
@@ -51,6 +44,36 @@ public class MetadataAggregator {
 
     public void upsertAccountInfo(Exchange exchange, AccountInfo accountInfo) {
         aggregatedAccountInfo.put(exchange, accountInfo);
+    }
+
+    public Balance getBalance(Exchange exchange, Currency currency) {
+        if (aggregatedAccountInfo.containsKey(exchange)) {
+            if (exchange.equals(Exchange.KRAKEN)) {
+                return aggregatedAccountInfo.get(exchange).getWallets().get(null).getBalance(currency);
+            }
+            return aggregatedAccountInfo.get(exchange).getWallet().getBalance(currency);
+        } else {
+            LOG.warn("Unable to located wallet for exchange: {}", exchange);
+            return null;
+        }
+    }
+
+    public BigDecimal getMinimumOrderAmount(Exchange exchange, CurrencyPair currencyPair) {
+        if (aggregatedMetadata.containsKey(exchange) && aggregatedMetadata.get(exchange).containsKey(currencyPair)) {
+            return aggregatedMetadata.get(exchange).get(currencyPair).getMinimumAmount();
+        } else {
+            LOG.warn("Unable to locate minimumOrderAmount for exchange: {}, currencyPair: {}", exchange, currencyPair);
+            return null;
+        }
+    }
+
+    public Integer getPriceScale(Exchange exchange, CurrencyPair currencyPair) {
+        if (aggregatedMetadata.containsKey(exchange) && aggregatedMetadata.get(exchange).containsKey(currencyPair)) {
+            return aggregatedMetadata.get(exchange).get(currencyPair).getPriceScale();
+        } else {
+            LOG.warn("Unable to locate priceScale for exchange: {}, currencyPair: {}", exchange, currencyPair);
+            return null;
+        }
     }
 
     public Map<CurrencyPair, CurrencyPairMetaData> getCurrencyPairMetaDataMap(Exchange exchange) {

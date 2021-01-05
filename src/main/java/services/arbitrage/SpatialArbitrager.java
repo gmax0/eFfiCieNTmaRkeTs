@@ -8,6 +8,7 @@ import domain.Trade;
 import domain.constants.Exchange;
 import org.apache.commons.lang3.time.StopWatch;
 import org.knowm.xchange.currency.CurrencyPair;
+import org.knowm.xchange.dto.account.Fee;
 import org.knowm.xchange.dto.marketdata.OrderBook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +26,7 @@ import static org.knowm.xchange.dto.Order.OrderType.ASK;
 import static org.knowm.xchange.dto.Order.OrderType.BID;
 
 /**
- *
+ * A basic, naive spatial arbitrage algorithm for initial testing purposes.
  */
 public class SpatialArbitrager implements EventHandler<OrderBookEvent> {
 
@@ -125,6 +126,7 @@ public class SpatialArbitrager implements EventHandler<OrderBookEvent> {
         return orderBooksDescendingBids.get(currencyPair);
     }
 
+    //TODO: Improve this algorithm, currently just a barebones proof-of-concept
     public void computeTrades(CurrencyPair currencyPair) {
         if (!stopWatch.isStarted()) {
             stopWatch.start();
@@ -158,23 +160,42 @@ public class SpatialArbitrager implements EventHandler<OrderBookEvent> {
                         continue;
                     }
 
+                    //TODO: Optimize this section if necessary
                     //For now, use taker fee as default
-                    BigDecimal ex1MakerFee = metadataAggregator.getMakerFee(ex1.key, currencyPair);
-                    BigDecimal ex1TakerFee = metadataAggregator.getTakerFee(ex1.key, currencyPair);
-                    BigDecimal ex1LowestAsk = ex1.value.getAsks().get(0).getLimitPrice();
+                    Integer ex1PriceScale = metadataAggregator.getPriceScale(ex1.key, currencyPair);
+                    BigDecimal ex1MinOrderAmount = metadataAggregator.getMinimumOrderAmount(ex1.key, currencyPair);
+                    BigDecimal ex1MaxOrder;
+                    Fee ex1Fees = metadataAggregator.getFees(ex1.key, currencyPair);
+                    BigDecimal ex1MakerFee = ex1Fees.getMakerFee();
+                    BigDecimal ex1TakerFee = ex1Fees.getTakerFee();
+                    BigDecimal ex1LowestAskPrice = ex1.value.getAsks().get(0).getLimitPrice();
+                    BigDecimal ex1LowestAskVolume = ex1.value.getAsks().get(0).getOriginalAmount();
                     BigDecimal ex1HighestBid = ex1.value.getBids().get(0).getLimitPrice(); //To determine price level ceiling for a maker order
-                    BigDecimal ex1EffectivePrice = ex1LowestAsk;
+                    BigDecimal ex1EffectivePrice = ex1LowestAskPrice;
 
-                    BigDecimal ex2MakerFee = metadataAggregator.getMakerFee(ex2.key, currencyPair);
-                    BigDecimal ex2TakerFee = metadataAggregator.getTakerFee(ex2.key, currencyPair);
-                    BigDecimal ex2LowestAsk = ex2.value.getAsks().get(0).getLimitPrice(); // To determine price level floor for a taker order
-                    BigDecimal ex2HighestBid = ex2.value.getBids().get(0).getLimitPrice();
+                    Integer ex2PriceScale = metadataAggregator.getPriceScale(ex2.key, currencyPair);
+                    BigDecimal ex2MinOrderAmount = metadataAggregator.getMinimumOrderAmount(ex2.key, currencyPair);
+                    BigDecimal ex2MaxOrder;
+                    Fee ex2Fees = metadataAggregator.getFees(ex2.key, currencyPair);
+                    BigDecimal ex2MakerFee = ex2Fees.getMakerFee();
+                    BigDecimal ex2TakerFee = ex2Fees.getTakerFee();
+                    BigDecimal ex2LowestAsk = ex2.value.getAsks().get(0).getLimitPrice(); // To determine price level floor for a maker order
+                    BigDecimal ex2HighestBidPrice = ex2.value.getBids().get(0).getLimitPrice();
                     BigDecimal ex2HighestBidVolume = ex2.value.getBids().get(0).getOriginalAmount();
-                    BigDecimal ex2EffectivePrice = ex2HighestBid;
+                    BigDecimal ex2EffectivePrice = ex2HighestBidPrice;
+
+                    BigDecimal effectiveBaseOrderVolume = ex1LowestAskVolume.min(ex2HighestBidVolume);
+                    if (effectiveBaseOrderVolume.compareTo(ex1MinOrderAmount) < 0 || effectiveBaseOrderVolume.compareTo(ex2MinOrderAmount) < 0) {
+                        continue;
+                    }
 
                     //Check for costToBuy = 0: .02371 * .0000004 / (1 - .0026)
-                    BigDecimal costToBuy = ex1EffectivePrice.multiply(ex2HighestBidVolume).divide(BigDecimal.ONE.subtract(ex1TakerFee), 5, RoundingMode.HALF_EVEN);
-                    BigDecimal totalSold = ex2EffectivePrice.multiply(ex2HighestBidVolume).multiply(BigDecimal.ONE.subtract(ex2TakerFee));
+                    //Prices AND Fees are assumed to be in the quote currency
+                    BigDecimal costToBuy = ex1EffectivePrice.multiply(effectiveBaseOrderVolume);
+                    BigDecimal totalCostToBuy = costToBuy.add(costToBuy.multiply(ex1TakerFee));
+
+                    BigDecimal incomeSold = ex2EffectivePrice.multiply(effectiveBaseOrderVolume);
+                    BigDecimal totalIncomeSold = incomeSold.subtract(incomeSold.multiply(ex2TakerFee));
 
                     Trade buyLow = Trade.builder()
                             .exchange(ex1.key)
@@ -182,8 +203,9 @@ public class SpatialArbitrager implements EventHandler<OrderBookEvent> {
                             .orderActionType(BID)
                             .orderType(LIMIT)
                             .price(ex1EffectivePrice)
-                            .amount(ex2HighestBidVolume)
+                            .amount(effectiveBaseOrderVolume)
                             .timeDiscovered(Instant.now())
+                            .fee(ex1TakerFee)
                             .build();
                     Trade sellHigh = Trade.builder()
                             .exchange(ex2.key)
@@ -191,26 +213,27 @@ public class SpatialArbitrager implements EventHandler<OrderBookEvent> {
                             .orderActionType(ASK)
                             .orderType(LIMIT)
                             .price(ex2EffectivePrice)
-                            .amount(ex2HighestBidVolume)
+                            .amount(effectiveBaseOrderVolume)
                             .timeDiscovered(Instant.now())
+                            .fee(ex2TakerFee)
                             .build();
 
-                    if (totalSold.compareTo(costToBuy) > 0
-                            && totalSold.subtract(costToBuy).divide(costToBuy, 5, RoundingMode.HALF_EVEN).compareTo(minGain) >= 0
+                    if (totalIncomeSold.compareTo(totalCostToBuy) > 0
+                            && totalIncomeSold.subtract(totalCostToBuy).divide(totalCostToBuy, 5, RoundingMode.HALF_EVEN).compareTo(minGain) >= 0
                             && !tradeCache.containsTrade(buyLow) && !tradeCache.containsTrade(sellHigh)) {
                         tradeCache.insertTrade(buyLow);
                         tradeCache.insertTrade(sellHigh);
 
                         LOG.info("Arbitrage Opportunity Detected for {} ! Buy {} units on {} at {}, Sell {} units on {} at {}",
-                                currencyPair, ex2HighestBidVolume, ex1.key, ex1EffectivePrice, ex2HighestBidVolume, ex2.key, ex2EffectivePrice);
+                                currencyPair, effectiveBaseOrderVolume, ex1.key, ex1EffectivePrice, effectiveBaseOrderVolume, ex2.key, ex2EffectivePrice);
                         LOG.info("With fees calculated, Cost To Buy: {} , Amount Sold: {}, Profit: {}",
-                                costToBuy, totalSold, totalSold.subtract(costToBuy));
+                                totalCostToBuy, totalIncomeSold, totalIncomeSold.subtract(totalCostToBuy));
                         tradeBuffer.insert(buyLow, sellHigh);
                     }
                 }
             }
         } catch (Exception e) {
-            LOG.error("Exception caught while performing computation for {}", currencyPair, e.getStackTrace());
+            LOG.error("Exception caught while performing computation for {}", currencyPair, e);
         }
 
         stopWatch.suspend();
