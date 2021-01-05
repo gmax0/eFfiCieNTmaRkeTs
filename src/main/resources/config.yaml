@@ -41,7 +41,7 @@ exchange:
         api_key: "${env:KRAKEN_API_KEY}"
         secret_key: "${env:KRAKEN_SECRET_KEY}"
   bitfinex:
-    enabled: false
+    enabled: true
     websocket:
       depth: 25 #1, 25, 100
       currency_pairs:
