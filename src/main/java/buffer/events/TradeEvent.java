@@ -19,9 +19,12 @@ public class TradeEvent {
             = new EventTranslatorVararg<TradeEvent>() {
         @Override
         public void translateTo(TradeEvent tradeEvent, long l, Object... trades) {
-            tradeEvent.setTrade1((Trade)trades[0]);
-            tradeEvent.setTrade2((Trade)trades[1]);
-            tradeEvent.setTrade3((Trade)trades[2]);
+            tradeEvent.setTrade1((Trade) trades[0]);
+            tradeEvent.setTrade2((Trade) trades[1]);
+
+            if (trades.length > 2) {
+                tradeEvent.setTrade3((Trade) trades[2]);
+            }
         }
     };
 }

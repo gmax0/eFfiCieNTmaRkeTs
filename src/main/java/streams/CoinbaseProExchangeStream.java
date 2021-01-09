@@ -2,36 +2,33 @@ package streams;
 
 import buffer.OrderBookBuffer;
 import config.Configuration;
+import domain.constants.Exchange;
 import info.bitrich.xchangestream.coinbasepro.CoinbaseProStreamingExchange;
 import info.bitrich.xchangestream.core.ProductSubscription;
-import info.bitrich.xchangestream.core.StreamingExchange;
 import info.bitrich.xchangestream.core.StreamingExchangeFactory;
-import io.reactivex.disposables.Disposable;
 import org.knowm.xchange.ExchangeSpecification;
 import org.knowm.xchange.currency.CurrencyPair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import static domain.constants.Exchange.COINBASE_PRO;
 
 
-public class CoinbaseProExchangeStream {
-
+public class CoinbaseProExchangeStream extends AbstractExchangeStream {
     private static final Logger LOG = LoggerFactory.getLogger(CoinbaseProExchangeStream.class);
+    private static final Exchange exchangeName = COINBASE_PRO;
 
-    private final domain.constants.Exchange exchangeName = COINBASE_PRO;
-    private boolean isEnabled = false;
+    @Override
+    Logger getLog() {
+        return LOG;
+    }
 
-    private StreamingExchange streamingExchange;
-    private ProductSubscription productSubscription;
-    private List<Disposable> subscriptions;
-
-    private OrderBookBuffer orderBookBuffer;
-    protected List<CurrencyPair> currencyPairs;
-    private int depth;
+    @Override
+    Exchange getExchange() {
+        return this.exchangeName;
+    }
 
     public CoinbaseProExchangeStream(Configuration config,
                                      OrderBookBuffer orderBookBuffer) {
@@ -56,36 +53,6 @@ public class CoinbaseProExchangeStream {
             this.streamingExchange = StreamingExchangeFactory.INSTANCE.createExchange(coinbaseProSpec);
         } else {
             LOG.warn("{}ExchangeStream is disabled.", exchangeName);
-        }
-    }
-
-    public void start() {
-        LOG.info("Initiating {}ExchangeStream WSS connection...", exchangeName);
-        this.streamingExchange.connect(productSubscription).blockingAwait();
-
-        LOG.info("Creating {}ExchangeStream subscriptions...", exchangeName);
-        currencyPairs.stream().forEach(currencyPair -> {
-            LOG.info("{}", currencyPair);
-            subscriptions.add(
-            streamingExchange.getStreamingMarketDataService()
-                    .getOrderBook(currencyPair, depth)
-                    .subscribe(
-                            (trade) -> {
-//                                LOG.info("Trade: {}", trade);
-                                orderBookBuffer.insert(trade, COINBASE_PRO, currencyPair);
-                            },
-                            throwable -> LOG.error("Error in trade subscription", throwable)));
-        });
-    }
-
-    public void shutdown() {
-        if (this.streamingExchange.isAlive()) {
-            LOG.info("Disposing {}ExchangeStream subscriptions...", exchangeName);
-            this.subscriptions.stream().forEach(subscription -> subscription.dispose());
-            LOG.info("Disconnecting from {}ExchangeStream WSS connection...");
-            this.streamingExchange.disconnect().blockingAwait();
-        } else {
-            LOG.info("{}ExchangeStream connection is not alive. ");
         }
     }
 }

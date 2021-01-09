@@ -41,7 +41,7 @@ public abstract class AbstractExchangeStream {
                                 .subscribe(
                                         (trade) -> {
                                             //LOG.info("Trade: {}", trade);
-                                            orderBookBuffer.insert(trade, BITFINEX, currencyPair);
+                                            orderBookBuffer.insert(trade, getExchange(), currencyPair);
                                         },
                                         throwable -> getLog().error("Error in trade subscription", throwable)));
             });
