@@ -5,10 +5,8 @@ import domain.Trade;
 import org.knowm.xchange.Exchange;
 import org.knowm.xchange.ExchangeFactory;
 import org.knowm.xchange.ExchangeSpecification;
-import org.knowm.xchange.currency.Currency;
 import org.knowm.xchange.currency.CurrencyPair;
 import org.knowm.xchange.dto.account.AccountInfo;
-import org.knowm.xchange.dto.account.Balance;
 import org.knowm.xchange.dto.account.Fee;
 import org.knowm.xchange.dto.meta.CurrencyPairMetaData;
 import org.knowm.xchange.kraken.KrakenExchange;
@@ -26,118 +24,129 @@ import java.util.Map;
 import static domain.constants.Exchange.KRAKEN;
 
 public class KrakenExchangeRestAPI implements ExchangeRestAPI {
-    private static final Logger LOG = LoggerFactory.getLogger(KrakenExchangeRestAPI.class);
+  private static final Logger LOG = LoggerFactory.getLogger(KrakenExchangeRestAPI.class);
 
-    private final domain.constants.Exchange exchangeName = KRAKEN;
-    private boolean isEnabled = false;
+  private final domain.constants.Exchange exchangeName = KRAKEN;
+  private boolean isEnabled = false;
 
-    private Exchange exchangeInstance;
-    private KrakenAccountService accountService;
-    private KrakenTradeService tradeService;
-    private KrakenMarketDataService marketDataService;
+  private Exchange exchangeInstance;
+  private KrakenAccountService accountService;
+  private KrakenTradeService tradeService;
+  private KrakenMarketDataService marketDataService;
 
-    private MetadataAggregator metadataAggregator;
+  private MetadataAggregator metadataAggregator;
 
-    //Cached Info
-    Map<CurrencyPair, CurrencyPairMetaData> metadataMap;
-    Map<CurrencyPair, Fee> feeMap;
-    AccountInfo accountInfo;
+  // Cached Info
+  Map<CurrencyPair, CurrencyPairMetaData> metadataMap;
+  Map<CurrencyPair, Fee> feeMap;
+  AccountInfo accountInfo;
 
-    public KrakenExchangeRestAPI(Configuration cfg,
-                                   MetadataAggregator metadataAggregator) throws IOException {
-        if (cfg.getKrakenConfig().isEnabled()) {
-            LOG.info("Initializing {}ExchangeRestAPI.", exchangeName);
-            isEnabled = true;
+  public KrakenExchangeRestAPI(Configuration cfg, MetadataAggregator metadataAggregator)
+      throws IOException {
+    if (cfg.getKrakenConfig().isEnabled()) {
+      LOG.info("Initializing {}ExchangeRestAPI.", exchangeName);
+      isEnabled = true;
 
-            ExchangeSpecification exSpec = new KrakenExchange().getDefaultExchangeSpecification();
+      ExchangeSpecification exSpec = new KrakenExchange().getDefaultExchangeSpecification();
 
-            exSpec.setSecretKey(cfg.getKrakenConfig().getSecretKey());
-            exSpec.setApiKey(cfg.getKrakenConfig().getApiKey());
+      exSpec.setSecretKey(cfg.getKrakenConfig().getSecretKey());
+      exSpec.setApiKey(cfg.getKrakenConfig().getApiKey());
 
-            exchangeInstance = ExchangeFactory.INSTANCE.createExchange(exSpec);
-            accountService = (KrakenAccountService)exchangeInstance.getAccountService();
-            tradeService = (KrakenTradeService)exchangeInstance.getTradeService();
-            marketDataService = (KrakenMarketDataService)exchangeInstance.getMarketDataService();
+      exchangeInstance = ExchangeFactory.INSTANCE.createExchange(exSpec);
+      accountService = (KrakenAccountService) exchangeInstance.getAccountService();
+      tradeService = (KrakenTradeService) exchangeInstance.getTradeService();
+      marketDataService = (KrakenMarketDataService) exchangeInstance.getMarketDataService();
 
-            this.metadataAggregator = metadataAggregator;
+      this.metadataAggregator = metadataAggregator;
 
-            //Get status details
-            /*
-            for (Kraken product : marketDataService.getStatus()) {
-                LOG.info(product.toString());
-            }
+      // Get status details
+      /*
+      for (Kraken product : marketDataService.getStatus()) {
+          LOG.info(product.toString());
+      }
 
-             */
+       */
 
-            //Cache initial calls
-            refreshProducts();
-            refreshFees();
-            refreshAccountInfo();
-        } else {
-            LOG.warn("{}RestAPI is disabled", exchangeName);
-        }
+      // Cache initial calls
+      refreshProducts();
+      refreshFees();
+      refreshAccountInfo();
+    } else {
+      LOG.warn("{}RestAPI is disabled", exchangeName);
     }
+  }
 
-    @Override
-    public domain.constants.Exchange getExchangeName() {
-        return exchangeName;
+  @Override
+  public domain.constants.Exchange getExchangeName() {
+    return exchangeName;
+  }
+
+  @Override
+  public boolean isEnabled() {
+    return this.isEnabled;
+  }
+
+  @Override
+  public void refreshProducts() throws IOException {
+    LOG.info("Refreshing {} Product Info.", exchangeName);
+
+    exchangeInstance.remoteInit();
+    metadataMap =
+        exchangeInstance
+            .getExchangeMetaData()
+            .getCurrencyPairs(); // NOTE: trading fees might be static for Kraken
+    metadataAggregator.upsertMetadata(KRAKEN, metadataMap);
+
+    LOG.debug(metadataMap.toString());
+  }
+
+  @Override
+  public void refreshFees() throws IOException {
+    LOG.info("Refreshing {} Fee Info.", exchangeName);
+
+    //        feeMap = accountService.getDynamicTradingFees(); //TODO: XChange to implement
+    // getDynamicTradingFees
+    feeMap = new HashMap<>();
+    exchangeInstance.remoteInit();
+    // TODO: Double check whether the fees in the exchangeMetaData are accurate... 0.26% looks ok
+    // for now
+    exchangeInstance
+        .getExchangeMetaData()
+        .getCurrencyPairs()
+        .forEach(
+            (currencyPair, currencyPairMetaData) -> {
+              feeMap.put(
+                  currencyPair,
+                  new Fee(
+                      currencyPairMetaData.getTradingFee(), currencyPairMetaData.getTradingFee()));
+            });
+    metadataAggregator.upsertFeeMap(KRAKEN, feeMap);
+
+    LOG.debug(feeMap.toString());
+  }
+
+  @Override
+  public void refreshAccountInfo() throws IOException {
+    LOG.info("Refreshing {} Account Info.", exchangeName);
+
+    accountInfo = accountService.getAccountInfo();
+    metadataAggregator.upsertAccountInfo(KRAKEN, accountInfo);
+
+    LOG.debug(accountInfo.toString());
+  }
+
+  @Override
+  public String submitTrade(Trade trade) throws IOException {
+    LOG.info("Submitting Trade: {}", trade);
+    switch (trade.getOrderType()) {
+      case STOP:
+        return tradeService.placeStopOrder(trade.toStopOrder());
+      case LIMIT:
+        return tradeService.placeLimitOrder(trade.toLimitOrder());
+      case MARKET:
+        return tradeService.placeMarketOrder(trade.toMarketOrder());
     }
-
-    @Override
-    public boolean isEnabled() {
-        return this.isEnabled;
-    }
-
-    @Override
-    public void refreshProducts() throws IOException {
-        LOG.info("Refreshing {} Product Info.", exchangeName);
-
-        exchangeInstance.remoteInit();
-        metadataMap = exchangeInstance.getExchangeMetaData().getCurrencyPairs(); //NOTE: trading fees might be static for Kraken
-        metadataAggregator.upsertMetadata(KRAKEN, metadataMap);
-
-        LOG.debug(metadataMap.toString());
-    }
-
-    @Override
-    public void refreshFees() throws IOException {
-        LOG.info("Refreshing {} Fee Info.", exchangeName);
-
-//        feeMap = accountService.getDynamicTradingFees(); //TODO: XChange to implement getDynamicTradingFees
-        feeMap = new HashMap<>();
-        exchangeInstance.remoteInit();
-        //TODO: Double check whether the fees in the exchangeMetaData are accurate... 0.26% looks ok for now
-        exchangeInstance.getExchangeMetaData().getCurrencyPairs().forEach((currencyPair, currencyPairMetaData) -> {
-            feeMap.put(currencyPair, new Fee(currencyPairMetaData.getTradingFee(), currencyPairMetaData.getTradingFee()));
-        });
-        metadataAggregator.upsertFeeMap(KRAKEN, feeMap);
-
-        LOG.debug(feeMap.toString());
-    }
-
-    @Override
-    public void refreshAccountInfo() throws IOException {
-        LOG.info("Refreshing {} Account Info.", exchangeName);
-
-        accountInfo = accountService.getAccountInfo();
-        metadataAggregator.upsertAccountInfo(KRAKEN, accountInfo);
-
-        LOG.debug(accountInfo.toString());
-    }
-
-    @Override
-    public String submitTrade(Trade trade) throws IOException {
-        LOG.info("Submitting Trade: {}", trade);
-        switch (trade.getOrderType()) {
-            case STOP:
-                return tradeService.placeStopOrder(trade.toStopOrder());
-            case LIMIT:
-                return tradeService.placeLimitOrder(trade.toLimitOrder());
-            case MARKET:
-                return tradeService.placeMarketOrder(trade.toMarketOrder());
-        }
-        LOG.warn("Trade order type not supported: {}", trade.getOrderType());
-        return null;
-    }
-
+    LOG.warn("Trade order type not supported: {}", trade.getOrderType());
+    return null;
+  }
 }

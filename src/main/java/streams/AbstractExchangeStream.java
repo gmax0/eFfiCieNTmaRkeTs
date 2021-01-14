@@ -10,54 +10,56 @@ import org.slf4j.Logger;
 
 import java.util.List;
 
-import static domain.constants.Exchange.BITFINEX;
-
 public abstract class AbstractExchangeStream {
 
-    abstract Logger getLog();
-    abstract Exchange getExchange();
+  abstract Logger getLog();
 
-    boolean isEnabled;
+  abstract Exchange getExchange();
 
-    StreamingExchange streamingExchange;
-    ProductSubscription productSubscription;
-    List<Disposable> subscriptions;
+  boolean isEnabled;
 
-    OrderBookBuffer orderBookBuffer;
-    List<CurrencyPair> currencyPairs;
-    int depth;
+  StreamingExchange streamingExchange;
+  ProductSubscription productSubscription;
+  List<Disposable> subscriptions;
 
-    public void start() {
-        if (this.isEnabled) {
-            getLog().info("Initiating {}ExchangeStream WSS connection...", getExchange());
-            this.streamingExchange.connect(productSubscription).blockingAwait();
+  OrderBookBuffer orderBookBuffer;
+  List<CurrencyPair> currencyPairs;
+  int depth;
 
-            getLog().info("Creating {}ExchangeStream subscriptions...", getExchange());
-            currencyPairs.stream().forEach(currencyPair -> {
+  public void start() {
+    if (this.isEnabled) {
+      getLog().info("Initiating {}ExchangeStream WSS connection...", getExchange());
+      this.streamingExchange.connect(productSubscription).blockingAwait();
+
+      getLog().info("Creating {}ExchangeStream subscriptions...", getExchange());
+      currencyPairs.stream()
+          .forEach(
+              currencyPair -> {
                 getLog().info("{}", currencyPair);
                 subscriptions.add(
-                        streamingExchange.getStreamingMarketDataService()
-                                .getOrderBook(currencyPair, depth)
-                                .subscribe(
-                                        (trade) -> {
-                                            //LOG.info("Trade: {}", trade);
-                                            orderBookBuffer.insert(trade, getExchange(), currencyPair);
-                                        },
-                                        throwable -> getLog().error("Error in trade subscription", throwable)));
-            });
-        } else {
-            getLog().warn("{}ExchangeStream is disabled, not attempting WSS connection.", getExchange());
-        }
+                    streamingExchange
+                        .getStreamingMarketDataService()
+                        .getOrderBook(currencyPair, depth)
+                        .subscribe(
+                            (trade) -> {
+                              // LOG.info("Trade: {}", trade);
+                              orderBookBuffer.insert(trade, getExchange(), currencyPair);
+                            },
+                            throwable -> getLog().error("Error in trade subscription", throwable)));
+              });
+    } else {
+      getLog().warn("{}ExchangeStream is disabled, not attempting WSS connection.", getExchange());
     }
+  }
 
-    public void shutdown() {
-        if (this.isEnabled && this.streamingExchange.isAlive()) {
-            getLog().info("Disposing {}ExchangeStream subscriptions...", getExchange());
-            this.subscriptions.stream().forEach(subscription -> subscription.dispose());
-            getLog().info("Disconnecting from {}ExchangeStream WSS connection...");
-            this.streamingExchange.disconnect().blockingAwait();
-        } else {
-            getLog().info("{}ExchangeStream connection is not alive. ");
-        }
+  public void shutdown() {
+    if (this.isEnabled && this.streamingExchange.isAlive()) {
+      getLog().info("Disposing {}ExchangeStream subscriptions...", getExchange());
+      this.subscriptions.stream().forEach(subscription -> subscription.dispose());
+      getLog().info("Disconnecting from {}ExchangeStream WSS connection...");
+      this.streamingExchange.disconnect().blockingAwait();
+    } else {
+      getLog().info("{}ExchangeStream connection is not alive. ");
     }
+  }
 }

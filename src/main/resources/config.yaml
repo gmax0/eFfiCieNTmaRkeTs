@@ -4,7 +4,7 @@ strategies:
     enabled: false
   spatial:
     enabled: false
-    min_gain: .001
+    min_gain: .0010
   #  min_gain: .002
     cache_time: 15
 
@@ -27,7 +27,7 @@ exchange:
         passphrase: "${env:COINBASEPRO_PASSPHRASE}"
       funding:
   kraken:
-    enabled: true
+    enabled: false
     websocket:
       depth: 10
       currency_pairs:
