@@ -1,17 +1,17 @@
 package rest.task;
 
-import rest.ExchangeRestAPI;
+import rest.AbstractExchangeRestAPI;
 
 public class RestAPIRefreshTask implements Runnable {
-  private ExchangeRestAPI exchangeRestAPI;
+  private AbstractExchangeRestAPI abstractExchangeRestAPI;
 
   @Override
   public void run() {
     try {
-      if (exchangeRestAPI.isEnabled()) {
-        exchangeRestAPI.refreshAccountInfo();
-        exchangeRestAPI.refreshProducts();
-        exchangeRestAPI.refreshFees();
+      if (abstractExchangeRestAPI.isEnabled()) {
+        abstractExchangeRestAPI.refreshAccountInfo();
+        abstractExchangeRestAPI.refreshProducts();
+        abstractExchangeRestAPI.refreshFees();
       }
     } catch (Exception e) {
       Thread.currentThread()
@@ -20,7 +20,7 @@ public class RestAPIRefreshTask implements Runnable {
     }
   }
 
-  public RestAPIRefreshTask(ExchangeRestAPI exchangeRestAPI) {
-    this.exchangeRestAPI = exchangeRestAPI;
+  public RestAPIRefreshTask(AbstractExchangeRestAPI abstractExchangeRestAPI) {
+    this.abstractExchangeRestAPI = abstractExchangeRestAPI;
   }
 }

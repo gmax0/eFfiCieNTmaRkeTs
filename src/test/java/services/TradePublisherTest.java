@@ -42,8 +42,8 @@ public class TradePublisherTest {
     public void setup() {
         MockitoAnnotations.openMocks(this);
 
-        when(krakenExchangeRestAPI.getExchangeName()).thenReturn(KRAKEN);
-        when(geminiExchangeRestAPI.getExchangeName()).thenReturn(GEMINI);
+        when(krakenExchangeRestAPI.getExchange()).thenReturn(KRAKEN);
+        when(geminiExchangeRestAPI.getExchange()).thenReturn(GEMINI);
 
         tradePublisher = new TradePublisher(metadataAggregator, krakenExchangeRestAPI, geminiExchangeRestAPI);
     }

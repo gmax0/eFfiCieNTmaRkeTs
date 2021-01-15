@@ -7,7 +7,7 @@ import domain.constants.Exchange;
 import org.knowm.xchange.dto.Order;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import rest.ExchangeRestAPI;
+import rest.AbstractExchangeRestAPI;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -20,17 +20,17 @@ public class TradePublisher implements EventHandler<TradeEvent> {
 
   private MetadataAggregator metadataAggregator;
 
-  private final Map<Exchange, ExchangeRestAPI> exchangeRestAPIMap = new HashMap<>();
+  private final Map<Exchange, AbstractExchangeRestAPI> exchangeRestAPIMap = new HashMap<>();
 
   public TradePublisher() {}
 
-  public TradePublisher(MetadataAggregator metadataAggregator, ExchangeRestAPI... exchangeRestAPI) {
+  public TradePublisher(MetadataAggregator metadataAggregator, AbstractExchangeRestAPI... abstractExchangeRestAPI) {
     this.metadataAggregator = metadataAggregator;
 
     // Load the Exchange -> ExchangeRestAPI map
-    for (ExchangeRestAPI exchangeRestAPI1 : exchangeRestAPI) {
+    for (AbstractExchangeRestAPI exchangeRestAPI1 : abstractExchangeRestAPI) {
       if (exchangeRestAPI1.isEnabled()) {
-        exchangeRestAPIMap.put(exchangeRestAPI1.getExchangeName(), exchangeRestAPI1);
+        exchangeRestAPIMap.put(exchangeRestAPI1.getExchange(), exchangeRestAPI1);
       }
     }
   }
@@ -169,12 +169,12 @@ public class TradePublisher implements EventHandler<TradeEvent> {
   // Trade1 must be the BUY order, Trade2 must be the SELL order.
   public void processSpatialArbitrageTrade(Trade trade1, Trade trade2) {
     // Load exchangeRestAPIs for both Trades
-    ExchangeRestAPI exchangeRestAPI1 = exchangeRestAPIMap.get(trade1.getExchange());
+    AbstractExchangeRestAPI exchangeRestAPI1 = exchangeRestAPIMap.get(trade1.getExchange());
     if (exchangeRestAPI1 == null) {
       LOG.error("Unable to load {}'s exchangeRestAPI", trade1.getExchange());
       return;
     }
-    ExchangeRestAPI exchangeRestAPI2 = exchangeRestAPIMap.get(trade2.getExchange());
+    AbstractExchangeRestAPI exchangeRestAPI2 = exchangeRestAPIMap.get(trade2.getExchange());
     if (exchangeRestAPI2 == null) {
       LOG.error("Unable to load {}'s exchangeRestAPI", trade2.getExchange());
       return;
