@@ -1,4 +1,4 @@
-package rest.task;
+package util.task;
 
 import rest.AbstractExchangeRestAPI;
 

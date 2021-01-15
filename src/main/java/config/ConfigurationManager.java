@@ -1,19 +1,36 @@
 package config;
 
+import domain.constants.Exchange;
 import lombok.Getter;
 import org.apache.commons.configuration2.YAMLConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
+import org.knowm.xchange.currency.Currency;
 import org.knowm.xchange.currency.CurrencyPair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import static domain.constants.Exchange.*;
 
 @Getter
 public class ConfigurationManager {
   private static Logger LOG = LoggerFactory.getLogger(ConfigurationManager.class);
 
   private Configuration config;
+
+  public Map<Exchange, List<CurrencyPair>> getActiveExchangesPairMap() {
+    return config.getExchangeConfigs().stream()
+        .filter(config -> config.enabled)
+        .collect(
+            Collectors.toMap(
+                Configuration.ExchangeConfig::getExchange,
+                Configuration.ExchangeConfig::getCurrencyPairs));
+  }
 
   public ConfigurationManager(InputStream is) throws ConfigurationException {
     YAMLConfiguration yamlConfiguration = new YAMLConfiguration();
@@ -35,6 +52,7 @@ public class ConfigurationManager {
                     .build())
             .coinbaseProConfig(
                 Configuration.CoinbaseProConfig.builder()
+                    .exchange(COINBASE_PRO)
                     .enabled(yamlConfiguration.getBoolean("exchange.coinbase_pro.enabled"))
                     .apiKey(
                         yamlConfiguration.getString(
@@ -53,6 +71,7 @@ public class ConfigurationManager {
                     .build())
             .bitfinexConfig(
                 Configuration.BitfinexConfig.builder()
+                    .exchange(BITFINEX)
                     .enabled(yamlConfiguration.getBoolean("exchange.bitfinex.enabled"))
                     .apiKey(
                         yamlConfiguration.getString("exchange.bitfinex.api.credentials.api_key"))
@@ -66,6 +85,7 @@ public class ConfigurationManager {
                     .build())
             .krakenConfig(
                 Configuration.KrakenConfig.builder()
+                    .exchange(KRAKEN)
                     .enabled(yamlConfiguration.getBoolean("exchange.kraken.enabled"))
                     .apiKey(yamlConfiguration.getString("exchange.kraken.api.credentials.api_key"))
                     .secretKey(
@@ -78,6 +98,7 @@ public class ConfigurationManager {
                     .build())
             .geminiConfig(
                 Configuration.GeminiConfig.builder()
+                    .exchange(GEMINI)
                     .enabled(yamlConfiguration.getBoolean("exchange.gemini.enabled"))
                     .apiKey(yamlConfiguration.getString("exchange.gemini.api.credentials.api_key"))
                     .secretKey(

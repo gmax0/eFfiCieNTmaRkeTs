@@ -1,4 +1,7 @@
 import buffer.OrderBookBuffer;
+import domain.constants.Exchange;
+import org.knowm.xchange.currency.CurrencyPair;
+import services.BalanceCaptor;
 import services.TradePublisher;
 import streams.BitfinexExchangeStream;
 import streams.CoinbaseProExchangeStream;
@@ -14,10 +17,13 @@ import rest.BitfinexExchangeRestAPI;
 import rest.CoinbaseProExchangeRestAPI;
 import rest.GeminiExchangeRestAPI;
 import rest.KrakenExchangeRestAPI;
-import rest.task.RestAPIRefreshTask;
+import util.task.BalanceCaptorTask;
+import util.task.RestAPIRefreshTask;
 import services.MetadataAggregator;
 import services.arbitrage.SpatialArbitrager;
 
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -31,9 +37,14 @@ public class Application {
         new ConfigurationManager(Application.class.getResourceAsStream("config.yaml"));
     Configuration config = configurationManager.getConfig();
 
-    // Setup Services
+    Map<Exchange, List<CurrencyPair>> activeExchangesPairMap =
+        configurationManager.getActiveExchangesPairMap();
+    LOG.info("Active Exchanges: {}", activeExchangesPairMap.keySet());
+
+    // Setup Auxillary Services
     // TODO: setup a dependency injection framework
     MetadataAggregator metadataAggregator = new MetadataAggregator();
+    BalanceCaptor balanceCaptor = new BalanceCaptor(metadataAggregator, activeExchangesPairMap);
 
     // Setup ExchangeRestAPIs
     GeminiExchangeRestAPI geminiExchangeRestAPI =
@@ -63,9 +74,11 @@ public class Application {
 
     Thread.sleep(1000);
 
-    // Setup Refresh Tasks
+    // Setup Recurring Tasks
     ScheduledExecutorService scheduledExecutorService =
-        Executors.newScheduledThreadPool(1, new ThreadFactory("APIRefresher"));
+        Executors.newScheduledThreadPool(1, new ThreadFactory("RecurringTasks"));
+    scheduledExecutorService.scheduleAtFixedRate(
+        new BalanceCaptorTask(balanceCaptor), 0, 60, TimeUnit.SECONDS);
     scheduledExecutorService.scheduleAtFixedRate(
         new RestAPIRefreshTask(geminiExchangeRestAPI),
         0,
@@ -98,6 +111,9 @@ public class Application {
     BitfinexExchangeStream bitfinexExchangeStream =
         new BitfinexExchangeStream(config, orderBookBuffer);
     bitfinexExchangeStream.start();
+
+    //Setup Shutdown Hook
+
 
     while (true) {
       Thread.sleep(Long.MAX_VALUE);
