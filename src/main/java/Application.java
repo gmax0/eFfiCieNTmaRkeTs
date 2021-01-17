@@ -75,30 +75,25 @@ public class Application {
     Thread.sleep(1000);
 
     // Setup Recurring Tasks
+    RestAPIRefreshTask geminiAPIRefreshTask = new RestAPIRefreshTask(geminiExchangeRestAPI);
+    RestAPIRefreshTask coinbaseAPIRefreshTask = new RestAPIRefreshTask(coinbaseProExchangeRestAPI);
+    RestAPIRefreshTask bitfinexAPIRefreshTask = new RestAPIRefreshTask(bitfinexExchangeRestAPI);
+    RestAPIRefreshTask krakenAPIRefreshTask = new RestAPIRefreshTask(krakenExchangeRestAPI);
     ScheduledExecutorService scheduledExecutorService =
         Executors.newScheduledThreadPool(1, new ThreadFactory("RecurringTasks"));
     scheduledExecutorService.scheduleAtFixedRate(
         new BalanceCaptorTask(balanceCaptor), 0, 60, TimeUnit.SECONDS);
     scheduledExecutorService.scheduleAtFixedRate(
-        new RestAPIRefreshTask(geminiExchangeRestAPI),
-        0,
-        config.getGeminiConfig().getRefreshRate(),
-        TimeUnit.SECONDS);
+        geminiAPIRefreshTask, 0, config.getGeminiConfig().getRefreshRate(), TimeUnit.SECONDS);
     scheduledExecutorService.scheduleAtFixedRate(
-        new RestAPIRefreshTask(coinbaseProExchangeRestAPI),
+        coinbaseAPIRefreshTask,
         0,
         config.getCoinbaseProConfig().getRefreshRate(),
         TimeUnit.SECONDS);
     scheduledExecutorService.scheduleAtFixedRate(
-        new RestAPIRefreshTask(bitfinexExchangeRestAPI),
-        0,
-        config.getBitfinexConfig().getRefreshRate(),
-        TimeUnit.SECONDS);
+        bitfinexAPIRefreshTask, 0, config.getBitfinexConfig().getRefreshRate(), TimeUnit.SECONDS);
     scheduledExecutorService.scheduleAtFixedRate(
-        new RestAPIRefreshTask(krakenExchangeRestAPI),
-        0,
-        config.getKrakenConfig().getRefreshRate(),
-        TimeUnit.SECONDS);
+        krakenAPIRefreshTask, 0, config.getKrakenConfig().getRefreshRate(), TimeUnit.SECONDS);
 
     // Setup WebSocket Streams
     GeminiExchangeStream geminiExchangeStream = new GeminiExchangeStream(config, orderBookBuffer);
@@ -112,8 +107,14 @@ public class Application {
         new BitfinexExchangeStream(config, orderBookBuffer);
     bitfinexExchangeStream.start();
 
-    //Setup Shutdown Hook
-
+    // Setup Shutdown Hook, TODO: clean this up later
+    Runtime.getRuntime()
+        .addShutdownHook(
+            new Thread(
+                () -> {
+                  balanceCaptor.refreshBalances();
+                  balanceCaptor.captureBalances();
+                }));
 
     while (true) {
       Thread.sleep(Long.MAX_VALUE);
