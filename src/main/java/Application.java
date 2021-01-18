@@ -4,6 +4,11 @@ import org.knowm.xchange.currency.CurrencyPair;
 import rest.*;
 import services.BalanceCaptor;
 import services.TradePublisher;
+import services.arbitrage.SpatialArbitragerV2;
+import streams.BitfinexExchangeStream;
+import streams.CoinbaseProExchangeStream;
+import streams.GeminiExchangeStream;
+import streams.KrakenExchangeStream;
 import streams.*;
 import util.ThreadFactory;
 import buffer.TradeBuffer;
@@ -63,7 +68,9 @@ public class Application {
     TradeBuffer tradeBuffer = new TradeBuffer(tradePublisher);
     SpatialArbitrager spatialArbitrager =
         new SpatialArbitrager(config, metadataAggregator, tradeBuffer);
-    OrderBookBuffer orderBookBuffer = new OrderBookBuffer(spatialArbitrager);
+    SpatialArbitragerV2 spatialArbitragerV2 =
+            new SpatialArbitragerV2(config, metadataAggregator, tradeBuffer);
+    OrderBookBuffer orderBookBuffer = new OrderBookBuffer(spatialArbitrager, spatialArbitragerV2);
 
     // Start Buffers
     tradeBuffer.start();
