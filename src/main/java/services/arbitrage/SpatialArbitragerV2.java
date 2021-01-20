@@ -119,19 +119,29 @@ public class SpatialArbitragerV2 implements EventHandler<OrderBookEvent> {
 
   private boolean tradeExists(Trade trade) {
     OrderBook orderBook = orderBooksAll.get(trade.getCurrencyPair()).get(trade.getExchange());
-    if (orderBook == null) return false;
+    if (orderBook == null) {
+      LOG.info("Orderbook was null");
+      return false;
+    }
 
     LimitOrder limitOrder;
 
     if (trade.getOrderActionType().equals(Order.OrderType.ASK)) {
-      limitOrder = orderBook.getAsks().stream().filter(asks -> asks.getLimitPrice().equals(trade.getPrice())).findFirst().get();
+      //If order type is ASK, search for the bid that we're fulfilling
+      LOG.info("Checking for bid...");
+      limitOrder = orderBook.getBids().stream().filter(bids -> bids.getLimitPrice().equals(trade.getPrice())).findFirst().orElse(null);
     } else {
-      limitOrder = orderBook.getBids().stream().filter(asks -> asks.getLimitPrice().equals(trade.getPrice())).findFirst().get();
+      //If order type is BID, search for the ask that we're fulfilling
+      LOG.info("Checking for ask...");
+      limitOrder = orderBook.getAsks().stream().filter(asks -> asks.getLimitPrice().equals(trade.getPrice())).findFirst().orElse(null);
     }
+    LOG.info("{}", limitOrder);
 
     if (limitOrder != null && limitOrder.getOriginalAmount().compareTo(trade.getAmount()) >= 0) {
+      LOG.info("Returning true");
       return true;
     }
+    LOG.info("Returning false");
     return false;
   }
 
@@ -144,6 +154,8 @@ public class SpatialArbitragerV2 implements EventHandler<OrderBookEvent> {
       LOG.info("Submitting Bid Trade: {}", bid);
       LOG.info("Submitting Ask Trade: {}", ask);
       tradeBuffer.insert(bid, ask);
+    } else {
+      LOG.info("Trades no longer exist!");
     }
 
     //Mark
