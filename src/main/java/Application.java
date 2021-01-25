@@ -1,22 +1,16 @@
 import buffer.OrderBookBuffer;
 import domain.constants.Exchange;
 import org.knowm.xchange.currency.CurrencyPair;
+import rest.*;
 import services.BalanceCaptor;
 import services.TradePublisher;
-import streams.BitfinexExchangeStream;
-import streams.CoinbaseProExchangeStream;
-import streams.GeminiExchangeStream;
-import streams.KrakenExchangeStream;
+import streams.*;
 import util.ThreadFactory;
 import buffer.TradeBuffer;
 import config.Configuration;
 import config.ConfigurationManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import rest.BitfinexExchangeRestAPI;
-import rest.CoinbaseProExchangeRestAPI;
-import rest.GeminiExchangeRestAPI;
-import rest.KrakenExchangeRestAPI;
 import util.task.BalanceCaptorTask;
 import util.task.RestAPIRefreshTask;
 import services.MetadataAggregator;
@@ -55,6 +49,8 @@ public class Application {
         new BitfinexExchangeRestAPI(config, metadataAggregator);
     KrakenExchangeRestAPI krakenExchangeRestAPI =
         new KrakenExchangeRestAPI(config, metadataAggregator);
+    BinanceExchangeRestAPI binanceExchangeRestAPI =
+        new BinanceExchangeRestAPI(config, metadataAggregator);
 
     TradePublisher tradePublisher =
         new TradePublisher(
@@ -79,6 +75,7 @@ public class Application {
     RestAPIRefreshTask coinbaseAPIRefreshTask = new RestAPIRefreshTask(coinbaseProExchangeRestAPI);
     RestAPIRefreshTask bitfinexAPIRefreshTask = new RestAPIRefreshTask(bitfinexExchangeRestAPI);
     RestAPIRefreshTask krakenAPIRefreshTask = new RestAPIRefreshTask(krakenExchangeRestAPI);
+    RestAPIRefreshTask binanceAPIRefreshTask = new RestAPIRefreshTask(binanceExchangeRestAPI);
     ScheduledExecutorService scheduledExecutorService =
         Executors.newScheduledThreadPool(1, new ThreadFactory("RecurringTasks"));
     scheduledExecutorService.scheduleAtFixedRate(
@@ -94,6 +91,8 @@ public class Application {
         bitfinexAPIRefreshTask, 0, config.getBitfinexConfig().getRefreshRate(), TimeUnit.SECONDS);
     scheduledExecutorService.scheduleAtFixedRate(
         krakenAPIRefreshTask, 0, config.getKrakenConfig().getRefreshRate(), TimeUnit.SECONDS);
+    scheduledExecutorService.scheduleAtFixedRate(
+        binanceAPIRefreshTask, 0, config.getBinanceConfig().getRefreshRate(), TimeUnit.SECONDS);
 
     // Setup WebSocket Streams
     GeminiExchangeStream geminiExchangeStream = new GeminiExchangeStream(config, orderBookBuffer);
@@ -106,6 +105,9 @@ public class Application {
     BitfinexExchangeStream bitfinexExchangeStream =
         new BitfinexExchangeStream(config, orderBookBuffer);
     bitfinexExchangeStream.start();
+    BinanceExchangeStream binanceExchangeStream =
+        new BinanceExchangeStream(config, orderBookBuffer);
+    binanceExchangeStream.start();
 
     // Setup Shutdown Hook, TODO: clean this up later
     Runtime.getRuntime()

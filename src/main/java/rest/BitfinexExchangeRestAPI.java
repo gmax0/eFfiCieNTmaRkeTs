@@ -17,6 +17,16 @@ public class BitfinexExchangeRestAPI extends AbstractExchangeRestAPI {
   private static final Logger LOG = LoggerFactory.getLogger(BitfinexExchangeRestAPI.class);
   private final Exchange exchange = BITFINEX;
 
+  @Override
+  public Logger getLog() {
+    return LOG;
+  }
+
+  @Override
+  public Exchange getExchange() {
+    return this.exchange;
+  }
+
   public BitfinexExchangeRestAPI(Configuration cfg, MetadataAggregator metadataAggregator)
       throws IOException {
     if (cfg.getBitfinexConfig().isEnabled()) {
@@ -50,15 +60,5 @@ public class BitfinexExchangeRestAPI extends AbstractExchangeRestAPI {
     } else {
       LOG.warn("{}ExchangeRestAPI is diabled", exchange);
     }
-  }
-
-  @Override
-  public Logger getLog() {
-    return LOG;
-  }
-
-  @Override
-  public Exchange getExchange() {
-    return this.exchange;
   }
 }

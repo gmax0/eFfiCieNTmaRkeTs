@@ -8,10 +8,9 @@ strategies:
   #  min_gain: .002
     cache_time: 15
 
-
 exchange:
   coinbase_pro:
-    enabled: true
+    enabled: false
     websocket:
       depth: 10
       currency_pairs:
@@ -55,7 +54,7 @@ exchange:
         api_key: "${env:BITFINEX_API_KEY}"
         secret_key: "${env:BITFINEX_SECRET_KEY}"
   gemini:
-    enabled: true
+    enabled: false
     websocket:
       depth: 10
       currency_pairs:
@@ -68,4 +67,17 @@ exchange:
       credentials:
         api_key: "${env:GEMINI_API_KEY}"
         secret_key: "${env:GEMINI_SECRET_KEY}"
-
+  binance:
+    enabled: true
+    websocket:
+      depth: 10
+      currency_pairs:
+        - "BTC_USD"
+        - "ETH_USD"
+        - "LTC_USD"
+        - "ETH_BTC"
+    api:
+      refresh_rate: 60
+      credentials:
+        api_key: "${env:BINANCE_API_KEY}"
+        secret_key: "${env:BINANCE_SECRET_KEY}"

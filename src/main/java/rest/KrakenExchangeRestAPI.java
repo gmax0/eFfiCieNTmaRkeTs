@@ -19,6 +19,16 @@ public class KrakenExchangeRestAPI extends AbstractExchangeRestAPI {
   private static final Logger LOG = LoggerFactory.getLogger(KrakenExchangeRestAPI.class);
   private final domain.constants.Exchange exchange = KRAKEN;
 
+  @Override
+  public Logger getLog() {
+    return LOG;
+  }
+
+  @Override
+  public Exchange getExchange() {
+    return exchange;
+  }
+
   public KrakenExchangeRestAPI(Configuration cfg, MetadataAggregator metadataAggregator)
       throws IOException {
     if (cfg.getKrakenConfig().isEnabled()) {
@@ -77,15 +87,5 @@ public class KrakenExchangeRestAPI extends AbstractExchangeRestAPI {
     metadataAggregator.upsertFeeMap(KRAKEN, feeMap);
 
     LOG.debug(feeMap.toString());
-  }
-
-  @Override
-  public Logger getLog() {
-    return LOG;
-  }
-
-  @Override
-  public Exchange getExchange() {
-    return exchange;
   }
 }

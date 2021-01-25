@@ -17,6 +17,16 @@ public class CoinbaseProExchangeRestAPI extends AbstractExchangeRestAPI {
   private static final Logger LOG = LoggerFactory.getLogger(CoinbaseProExchangeRestAPI.class);
   private final Exchange exchange = COINBASE_PRO;
 
+  @Override
+  public Logger getLog() {
+    return LOG;
+  }
+
+  @Override
+  public Exchange getExchange() {
+    return exchange;
+  }
+
   /** Default Constructor for unit-testing */
   public CoinbaseProExchangeRestAPI() {}
 
@@ -46,15 +56,5 @@ public class CoinbaseProExchangeRestAPI extends AbstractExchangeRestAPI {
     } else {
       LOG.warn("{}RestAPI is disabled", exchange);
     }
-  }
-
-  @Override
-  public Logger getLog() {
-    return LOG;
-  }
-
-  @Override
-  public Exchange getExchange() {
-    return exchange;
   }
 }

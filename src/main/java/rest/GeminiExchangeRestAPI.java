@@ -17,6 +17,16 @@ public class GeminiExchangeRestAPI extends AbstractExchangeRestAPI {
   private static final Logger LOG = LoggerFactory.getLogger(GeminiExchangeRestAPI.class);
   private final domain.constants.Exchange exchange = GEMINI;
 
+  @Override
+  public Logger getLog() {
+    return LOG;
+  }
+
+  @Override
+  public Exchange getExchange() {
+    return exchange;
+  }
+
   public GeminiExchangeRestAPI(Configuration cfg, MetadataAggregator metadataAggregator)
       throws IOException {
     if (cfg.getGeminiConfig().isEnabled()) {
@@ -41,15 +51,5 @@ public class GeminiExchangeRestAPI extends AbstractExchangeRestAPI {
     } else {
       LOG.warn("{}RestAPI is disabled", exchange);
     }
-  }
-
-  @Override
-  public Logger getLog() {
-    return LOG;
-  }
-
-  @Override
-  public Exchange getExchange() {
-    return exchange;
   }
 }

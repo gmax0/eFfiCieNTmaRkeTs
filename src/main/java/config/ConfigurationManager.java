@@ -109,6 +109,19 @@ public class ConfigurationManager {
                             CurrencyPair.class, "exchange.gemini.websocket.currency_pairs"))
                     .depth(yamlConfiguration.getInt("exchange.gemini.websocket.depth"))
                     .build())
+            .binanceConfig(
+                Configuration.BinanceConfig.builder()
+                    .exchange(BINANCE)
+                    .enabled(yamlConfiguration.getBoolean("exchange.binance.enabled"))
+                    .apiKey(yamlConfiguration.getString("exchange.binance.api.credentials.api_key"))
+                    .secretKey(
+                        yamlConfiguration.getString("exchange.binance.api.credentials.secret_key"))
+                    .refreshRate(yamlConfiguration.getInt("exchange.binance.api.refresh_rate"))
+                    .currencyPairs(
+                        yamlConfiguration.getList(
+                            CurrencyPair.class, "exchange.binance.websocket.currency_pairs"))
+                    .depth(yamlConfiguration.getInt("exchange.binance.websocket.depth"))
+                    .build())
             .build();
   }
 }

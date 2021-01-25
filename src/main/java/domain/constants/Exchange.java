@@ -4,7 +4,8 @@ public enum Exchange {
   COINBASE_PRO("CoinbasePro"),
   KRAKEN("Kraken"),
   BITFINEX("Bitfinex"),
-  GEMINI("Gemini");
+  GEMINI("Gemini"),
+  BINANCE("Binance");
 
   private String str;
 

@@ -39,8 +39,6 @@
             <version>1.27</version>
         </dependency>
 
-
-
         <!-- Exchange Websocket Integrations -->
         <dependency>
             <groupId>org.knowm.xchange</groupId>
@@ -67,6 +65,12 @@
             <artifactId>xchange-stream-gemini</artifactId>
             <version>5.0.4</version>
         </dependency>
+        <dependency>
+            <groupId>org.knowm.xchange</groupId>
+            <artifactId>xchange-stream-binance</artifactId>
+            <version>5.0.4</version>
+        </dependency>
+
 
         <!-- Interthread Communication -->
         <dependency>
