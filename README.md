@@ -1,14 +1,14 @@
 
 ### Supported Exchanges
 
-[ ] Binance
+- [ ] Binance
 
-[ ] Bitfinex
+- [ ] Bitfinex
 
-[ ] Cex
+- [ ] Cex
 
-[X] CoinbasePro
+- [x] CoinbasePro
 
-[X] Gemini
+- [x] Gemini
 
-[X] Kraken
+- [x] Kraken
