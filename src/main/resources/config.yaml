@@ -81,3 +81,18 @@ exchange:
       credentials:
         api_key: "${env:BINANCE_API_KEY}"
         secret_key: "${env:BINANCE_SECRET_KEY}"
+  cex:
+    enabled: true
+    websocket:
+      depth: 10
+      currency_pairs:
+        - "BTC_USD"
+        - "ETH_USD"
+        - "LTC_USD"
+        - "ETH_BTC"
+    api:
+      refresh_rate: 60
+      credentials:
+        user: "${env:CEX_USER}"
+        api_key: "${env:CEX_API_KEY}"
+        secret_key: "${env:CEX_SECRET_KEY}"

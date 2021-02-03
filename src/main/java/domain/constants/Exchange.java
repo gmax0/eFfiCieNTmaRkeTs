@@ -5,7 +5,8 @@ public enum Exchange {
   KRAKEN("Kraken"),
   BITFINEX("Bitfinex"),
   GEMINI("Gemini"),
-  BINANCE("Binance");
+  BINANCE("Binance"),
+  CEX("CEX");
 
   private String str;
 

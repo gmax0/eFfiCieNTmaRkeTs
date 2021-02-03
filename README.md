@@ -1,3 +1,14 @@
 
-Potential Optimizations:
-- Serialize objects to bytes before publishing to buffers
+### Supported Exchanges
+
+[ ] Binance
+
+[ ] Bitfinex
+
+[ ] Cex
+
+[X] CoinbasePro
+
+[X] Gemini
+
+[X] Kraken

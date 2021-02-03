@@ -20,6 +20,7 @@ public class Configuration {
   private BitfinexConfig bitfinexConfig;
   private GeminiConfig geminiConfig;
   private BinanceConfig binanceConfig;
+  private CexConfig cexConfig;
 
   public List<ExchangeConfig> getExchangeConfigs() {
     return Arrays.asList(coinbaseProConfig, krakenConfig, bitfinexConfig, geminiConfig);
@@ -60,4 +61,10 @@ public class Configuration {
 
   @SuperBuilder
   public static class BinanceConfig extends ExchangeConfig {}
+
+  @SuperBuilder
+  @Getter
+  public static class CexConfig extends ExchangeConfig {
+    String user;
+  }
 }

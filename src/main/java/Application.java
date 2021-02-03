@@ -51,6 +51,7 @@ public class Application {
         new KrakenExchangeRestAPI(config, metadataAggregator);
     BinanceExchangeRestAPI binanceExchangeRestAPI =
         new BinanceExchangeRestAPI(config, metadataAggregator);
+    CexExchangeRestAPI cexExchangeRestAPI = new CexExchangeRestAPI(config, metadataAggregator);
 
     TradePublisher tradePublisher =
         new TradePublisher(
@@ -76,6 +77,7 @@ public class Application {
     RestAPIRefreshTask bitfinexAPIRefreshTask = new RestAPIRefreshTask(bitfinexExchangeRestAPI);
     RestAPIRefreshTask krakenAPIRefreshTask = new RestAPIRefreshTask(krakenExchangeRestAPI);
     RestAPIRefreshTask binanceAPIRefreshTask = new RestAPIRefreshTask(binanceExchangeRestAPI);
+    RestAPIRefreshTask cexAPIRefreshTask = new RestAPIRefreshTask(cexExchangeRestAPI);
     ScheduledExecutorService scheduledExecutorService =
         Executors.newScheduledThreadPool(1, new ThreadFactory("RecurringTasks"));
     scheduledExecutorService.scheduleAtFixedRate(
@@ -93,6 +95,8 @@ public class Application {
         krakenAPIRefreshTask, 0, config.getKrakenConfig().getRefreshRate(), TimeUnit.SECONDS);
     scheduledExecutorService.scheduleAtFixedRate(
         binanceAPIRefreshTask, 0, config.getBinanceConfig().getRefreshRate(), TimeUnit.SECONDS);
+    scheduledExecutorService.scheduleAtFixedRate(
+        cexAPIRefreshTask, 0, config.getBinanceConfig().getRefreshRate(), TimeUnit.SECONDS);
 
     // Setup WebSocket Streams
     GeminiExchangeStream geminiExchangeStream = new GeminiExchangeStream(config, orderBookBuffer);
@@ -108,6 +112,8 @@ public class Application {
     BinanceExchangeStream binanceExchangeStream =
         new BinanceExchangeStream(config, orderBookBuffer);
     binanceExchangeStream.start();
+    CexExchangeStream cexExchangeStream = new CexExchangeStream(config, orderBookBuffer);
+    cexExchangeStream.start();
 
     // Setup Shutdown Hook, TODO: clean this up later
     Runtime.getRuntime()

@@ -70,6 +70,11 @@
             <artifactId>xchange-stream-binance</artifactId>
             <version>5.0.4</version>
         </dependency>
+        <dependency>
+            <groupId>org.knowm.xchange</groupId>
+            <artifactId>xchange-stream-cexio</artifactId>
+            <version>5.0.4</version>
+        </dependency>
 
 
         <!-- Interthread Communication -->

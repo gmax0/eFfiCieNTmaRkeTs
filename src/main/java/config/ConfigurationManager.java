@@ -122,6 +122,20 @@ public class ConfigurationManager {
                             CurrencyPair.class, "exchange.binance.websocket.currency_pairs"))
                     .depth(yamlConfiguration.getInt("exchange.binance.websocket.depth"))
                     .build())
+            .cexConfig(
+                Configuration.CexConfig.builder()
+                    .exchange(CEX)
+                    .enabled(yamlConfiguration.getBoolean("exchange.cex.enabled"))
+                    .apiKey(yamlConfiguration.getString("exchange.cex.api.credentials.api_key"))
+                    .user(yamlConfiguration.getString("exchange.cex.api.credentials.user"))
+                    .secretKey(
+                        yamlConfiguration.getString("exchange.cex.api.credentials.secret_key"))
+                    .refreshRate(yamlConfiguration.getInt("exchange.cex.api.refresh_rate"))
+                    .currencyPairs(
+                        yamlConfiguration.getList(
+                            CurrencyPair.class, "exchange.cex.websocket.currency_pairs"))
+                    .depth(yamlConfiguration.getInt("exchange.cex.websocket.depth"))
+                    .build())
             .build();
   }
 }
