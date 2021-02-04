@@ -43,37 +43,37 @@
         <dependency>
             <groupId>org.knowm.xchange</groupId>
             <artifactId>xchange-core</artifactId>
-            <version>5.0.4</version>
+            <version>5.0.6-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.knowm.xchange</groupId>
             <artifactId>xchange-stream-coinbasepro</artifactId>
-            <version>5.0.4</version>
+            <version>5.0.6-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.knowm.xchange</groupId>
             <artifactId>xchange-stream-kraken</artifactId>
-            <version>5.0.4</version>
+            <version>5.0.6-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.knowm.xchange</groupId>
             <artifactId>xchange-stream-bitfinex</artifactId>
-            <version>5.0.4</version>
+            <version>5.0.6-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.knowm.xchange</groupId>
             <artifactId>xchange-stream-gemini</artifactId>
-            <version>5.0.4</version>
+            <version>5.0.6-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.knowm.xchange</groupId>
             <artifactId>xchange-stream-binance</artifactId>
-            <version>5.0.4</version>
+            <version>5.0.6-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.knowm.xchange</groupId>
             <artifactId>xchange-stream-cexio</artifactId>
-            <version>5.0.4</version>
+            <version>5.0.6-SNAPSHOT</version>
         </dependency>
 
 

@@ -63,29 +63,4 @@ public class KrakenExchangeRestAPI extends AbstractExchangeRestAPI {
       LOG.warn("{}RestAPI is disabled", exchange);
     }
   }
-
-  @Override
-  public void refreshFees() throws IOException {
-    LOG.info("Refreshing {} Fee Info.", exchange);
-
-    //        feeMap = accountService.getDynamicTradingFees(); //TODO: XChange to implement
-    // getDynamicTradingFees
-    feeMap = new HashMap<>();
-    exchangeInstance.remoteInit();
-    // TODO: Double check whether the fees in the exchangeMetaData are accurate... 0.26% looks ok
-    // for now
-    exchangeInstance
-        .getExchangeMetaData()
-        .getCurrencyPairs()
-        .forEach(
-            (currencyPair, currencyPairMetaData) -> {
-              feeMap.put(
-                  currencyPair,
-                  new Fee(
-                      currencyPairMetaData.getTradingFee(), currencyPairMetaData.getTradingFee()));
-            });
-    metadataAggregator.upsertFeeMap(KRAKEN, feeMap);
-
-    LOG.debug(feeMap.toString());
-  }
 }
