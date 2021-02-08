@@ -4,14 +4,12 @@ import config.Configuration;
 import domain.constants.Exchange;
 import org.knowm.xchange.ExchangeFactory;
 import org.knowm.xchange.ExchangeSpecification;
-import org.knowm.xchange.dto.account.Fee;
 import org.knowm.xchange.kraken.KrakenExchange;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import services.MetadataAggregator;
 
 import java.io.IOException;
-import java.util.HashMap;
 
 import static domain.constants.Exchange.KRAKEN;
 
@@ -46,14 +44,6 @@ public class KrakenExchangeRestAPI extends AbstractExchangeRestAPI {
       marketDataService = exchangeInstance.getMarketDataService();
 
       this.metadataAggregator = metadataAggregator;
-
-      // Get status details
-      /*
-      for (Kraken product : marketDataService.getStatus()) {
-          LOG.info(product.toString());
-      }
-
-       */
 
       // Cache initial calls
       refreshProducts();

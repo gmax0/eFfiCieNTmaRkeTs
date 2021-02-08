@@ -4,13 +4,13 @@ strategies:
     enabled: false
   spatial:
     enabled: false
-    min_gain: .0010
+    min_gain: .0015
   #  min_gain: .002
     cache_time: 15
 
 exchange:
   coinbase_pro:
-    enabled: false
+    enabled: true
     websocket:
       depth: 10
       currency_pairs:
@@ -54,7 +54,7 @@ exchange:
         api_key: "${env:BITFINEX_API_KEY}"
         secret_key: "${env:BITFINEX_SECRET_KEY}"
   gemini:
-    enabled: false
+    enabled: true
     websocket:
       depth: 10
       currency_pairs:
@@ -68,7 +68,7 @@ exchange:
         api_key: "${env:GEMINI_API_KEY}"
         secret_key: "${env:GEMINI_SECRET_KEY}"
   binance:
-    enabled: true
+    enabled: false
     websocket:
       depth: 10
       currency_pairs:
@@ -82,7 +82,7 @@ exchange:
         api_key: "${env:BINANCE_API_KEY}"
         secret_key: "${env:BINANCE_SECRET_KEY}"
   cex:
-    enabled: true
+    enabled: false
     websocket:
       depth: 10
       currency_pairs:

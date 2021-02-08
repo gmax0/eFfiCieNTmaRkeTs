@@ -5,7 +5,7 @@
 
 - [ ] Bitfinex
 
-- [ ] Cex
+- [ ] Cex (Poorly performing WebSocket)
 
 - [x] CoinbasePro
 
