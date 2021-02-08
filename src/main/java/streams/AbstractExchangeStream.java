@@ -46,6 +46,7 @@ public abstract class AbstractExchangeStream {
                               orderBookBuffer.insert(trade, getExchange(), currencyPair);
                             },
                             throwable -> getLog().error("Error in trade subscription", throwable)));
+                            //TODO: Send an empty order book to clear out state in arbitrage layer
               });
     } else {
       getLog().warn("{}ExchangeStream is disabled, not attempting WSS connection.", getExchange());
