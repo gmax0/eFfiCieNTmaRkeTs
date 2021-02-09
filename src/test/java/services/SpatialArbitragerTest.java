@@ -77,6 +77,9 @@ public class SpatialArbitragerTest {
         OrderBook orderBook1 = OrderBookProvider.getOrderBookFromCSV(BTC_USD, date, "orderBookData/custom/CUSTOM-1-bids.csv", "orderBookData/custom/CUSTOM-1-asks.csv");
         OrderBook orderBook2 = OrderBookProvider.getOrderBookFromCSV(BTC_USD, date, "orderBookData/custom/CUSTOM-2-bids.csv", "orderBookData/custom/CUSTOM-2-asks.csv");
 
+        MetadataAggregatorMocker.setMockPriceScale(mockMetadataAggregator, BITFINEX, BTC_USD, 10);
+        MetadataAggregatorMocker.setMockPriceScale(mockMetadataAggregator, COINBASE_PRO, BTC_USD, 10);
+
         MetadataAggregatorMocker.setMockFee(mockMetadataAggregator, BITFINEX, BTC_USD, new BigDecimal(0), new BigDecimal(0));
         MetadataAggregatorMocker.setMockFee(mockMetadataAggregator, COINBASE_PRO, BTC_USD, new BigDecimal(0), new BigDecimal(0));
 
@@ -84,6 +87,6 @@ public class SpatialArbitragerTest {
         MetadataAggregatorMocker.setOrderMinimumVolume(mockMetadataAggregator, COINBASE_PRO, BTC_USD, BigDecimal.ZERO);
 
         spatialArbitrager.upsertOrderBook(BITFINEX, BTC_USD, orderBook1);
-        spatialArbitrager.upsertOrderBook(COINBASE_PRO, BTC_USD, orderBook2); //computeTrades() should occur on this call
+        spatialArbitrager.upsertOrderBook(COINBASE_PRO, BTC_USD, orderBook2); //processOrderbooks() should occur on this call
     }
 }

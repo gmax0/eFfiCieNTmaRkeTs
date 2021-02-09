@@ -15,7 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import services.MetadataAggregator;
 import util.ThreadFactory;
-import util.task.ComputeArbitrageTask;
+import util.task.ComputeArbitrageTaskV2;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -107,7 +107,7 @@ public class SpatialArbitragerV2 implements EventHandler<OrderBookEvent> {
     this.processOrderBook(event.exchange, event.currencyPair, event.orderBook);
 
     //Submit Task
-    executorService.submit(new ComputeArbitrageTask(
+    executorService.submit(new ComputeArbitrageTaskV2(
             this,
             (ArrayList)aggregatedAsks.get(event.currencyPair).clone(),
             (ArrayList)aggregatedBids.get(event.currencyPair).clone(),
