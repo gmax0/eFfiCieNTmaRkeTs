@@ -108,7 +108,7 @@ public class SpatialArbitrager implements EventHandler<OrderBookEvent> {
   }
 
   public TreeSet<Entry<Exchange, OrderBook>> getOrderBooksDescendingBids(
-          CurrencyPair currencyPair) {
+      CurrencyPair currencyPair) {
     return orderBooksDescendingBids.get(currencyPair);
   }
 
@@ -120,7 +120,7 @@ public class SpatialArbitrager implements EventHandler<OrderBookEvent> {
   // TODO: Not sure why but long-running executions results in a single exchange with a duplicate
   // entry in the TreeSet...
   public void upsertOrderBook(Exchange exchange, CurrencyPair currencyPair, OrderBook orderBook) {
-    //Update TreeSets
+    // Update TreeSets
     orderBooksAscendingAsks.computeIfAbsent(
         currencyPair,
         (k) -> {
@@ -142,7 +142,7 @@ public class SpatialArbitrager implements EventHandler<OrderBookEvent> {
     orderBooksAscendingAsks.get(currencyPair).add(entry);
     orderBooksDescendingBids.get(currencyPair).add(entry);
 
-    //Perform Checks
+    // Perform Checks
     if (orderBooksAscendingAsks.size() != orderBooksDescendingBids.size()) {
       LOG.error("Different TreeSet sizes for currency pair {}", currencyPair);
       return;
@@ -150,14 +150,14 @@ public class SpatialArbitrager implements EventHandler<OrderBookEvent> {
     // Not enough exchanges to analyze price deviations
     if (orderBooksAscendingAsks.get(currencyPair).size() <= 1) {
       LOG.debug(
-              "Currency Pair: {} does not possess the minimum number of exchanges to perform spatial arbitrage analysis",
-              currencyPair);
+          "Currency Pair: {} does not possess the minimum number of exchanges to perform spatial arbitrage analysis",
+          currencyPair);
       return;
     }
 
     processOrderbooks(currencyPair);
 
-    //Submit Task
+    // Submit Task
     /*
     executorService.submit(new ComputeArbitrageTask(
             this,
@@ -170,23 +170,29 @@ public class SpatialArbitrager implements EventHandler<OrderBookEvent> {
   }
 
   /**
+   * TODO: Add user enable-able logic to place a maker order on either buy/sell side (in the spread
+   * zone)
    *
-   * TODO: Add user enable-able logic to place a maker order on either buy/sell side (in the spread zone)
    * @param currencyPair
    * @param askOrderBook
    * @param bidOrderBook
    * @return
    */
-  private boolean extractTrades(CurrencyPair currencyPair, Entry<Exchange, OrderBook> askOrderBook, Entry<Exchange, OrderBook> bidOrderBook) {
+  private boolean extractTrades(
+      CurrencyPair currencyPair,
+      Entry<Exchange, OrderBook> askOrderBook,
+      Entry<Exchange, OrderBook> bidOrderBook) {
     Integer ex1PriceScale = metadataAggregator.getPriceScale(askOrderBook.getKey(), currencyPair);
-    BigDecimal ex1MinOrderAmount = metadataAggregator.getMinimumOrderAmount(askOrderBook.getKey(), currencyPair);
+    BigDecimal ex1MinOrderAmount =
+        metadataAggregator.getMinimumOrderAmount(askOrderBook.getKey(), currencyPair);
     BigDecimal ex1MaxOrder;
     Fee ex1Fees = metadataAggregator.getFees(askOrderBook.getKey(), currencyPair);
     BigDecimal ex1MakerFee = ex1Fees.getMakerFee();
     BigDecimal ex1TakerFee = ex1Fees.getTakerFee();
 
     Integer ex2PriceScale = metadataAggregator.getPriceScale(bidOrderBook.getKey(), currencyPair);
-    BigDecimal ex2MinOrderAmount = metadataAggregator.getMinimumOrderAmount(bidOrderBook.getKey(), currencyPair);
+    BigDecimal ex2MinOrderAmount =
+        metadataAggregator.getMinimumOrderAmount(bidOrderBook.getKey(), currencyPair);
     BigDecimal ex2MaxOrder;
     Fee ex2Fees = metadataAggregator.getFees(bidOrderBook.getKey(), currencyPair);
     BigDecimal ex2MakerFee = ex2Fees.getMakerFee();
@@ -197,7 +203,7 @@ public class SpatialArbitrager implements EventHandler<OrderBookEvent> {
     // To determine price level floor for a maker order on ex2
     BigDecimal ex2LowestAsk = bidOrderBook.getValue().getAsks().get(0).getLimitPrice();
 
-    boolean tradesDiscovered = true; //Set to true so that the initial iteration may occur
+    boolean tradesDiscovered = true; // Set to true so that the initial iteration may occur
     List<LimitOrder> asks = askOrderBook.getValue().getAsks();
     List<LimitOrder> bids = bidOrderBook.getValue().getBids();
     List<LimitOrder> consumedAsks = new ArrayList<>();
@@ -208,14 +214,14 @@ public class SpatialArbitrager implements EventHandler<OrderBookEvent> {
       BigDecimal ex1CurLowestAskPrice = asks.get(i).getLimitPrice();
       BigDecimal ex1CurLowestAskVolume = asks.get(i).getOriginalAmount();
 
-      //Min-volume Check for ex1
+      // Min-volume Check for ex1
       if (ex1CurLowestAskVolume.compareTo(ex1MinOrderAmount) < 0) continue;
 
       for (int j = 0; j < bids.size(); j++) {
         BigDecimal ex2CurHighestBidPrice = bids.get(j).getLimitPrice();
         BigDecimal ex2CurHighestBidVolume = bids.get(j).getOriginalAmount();
 
-        //Min-volume Check for ex2
+        // Min-volume Check for ex2
         if (ex2CurHighestBidVolume.compareTo(ex2MinOrderAmount) < 0) continue;
 
         BigDecimal effectiveBaseOrderVolume = ex1CurLowestAskVolume.min(ex2CurHighestBidVolume);
@@ -229,54 +235,54 @@ public class SpatialArbitrager implements EventHandler<OrderBookEvent> {
         BigDecimal totalIncomeSold = incomeSold.subtract(incomeSold.multiply(ex2TakerFee));
 
         if (totalIncomeSold.compareTo(totalCostToBuy) > 0
-                && totalIncomeSold
-                .subtract(totalCostToBuy)
-                .divide(totalCostToBuy, 5, RoundingMode.HALF_EVEN)
-                .compareTo(minGain)
+            && totalIncomeSold
+                    .subtract(totalCostToBuy)
+                    .divide(totalCostToBuy, 5, RoundingMode.HALF_EVEN)
+                    .compareTo(minGain)
                 >= 0) {
           Trade buyLow =
-                  Trade.builder()
-                          .exchange(askOrderBook.getKey())
-                          .currencyPair(currencyPair)
-                          .orderActionType(BID)
-                          .orderType(LIMIT)
-                          .price(ex1CurLowestAskPrice)
-                          .amount(effectiveBaseOrderVolume)
-                          .timeDiscovered(Instant.now())
-                          .fee(ex1TakerFee)
-                          .build();
+              Trade.builder()
+                  .exchange(askOrderBook.getKey())
+                  .currencyPair(currencyPair)
+                  .orderActionType(BID)
+                  .orderType(LIMIT)
+                  .price(ex1CurLowestAskPrice)
+                  .amount(effectiveBaseOrderVolume)
+                  .timeDiscovered(Instant.now())
+                  .fee(ex1TakerFee)
+                  .build();
           Trade sellHigh =
-                  Trade.builder()
-                          .exchange(bidOrderBook.getKey())
-                          .currencyPair(currencyPair)
-                          .orderActionType(ASK)
-                          .orderType(LIMIT)
-                          .price(ex2CurHighestBidPrice)
-                          .amount(effectiveBaseOrderVolume)
-                          .timeDiscovered(Instant.now())
-                          .fee(ex2TakerFee)
-                          .build();
+              Trade.builder()
+                  .exchange(bidOrderBook.getKey())
+                  .currencyPair(currencyPair)
+                  .orderActionType(ASK)
+                  .orderType(LIMIT)
+                  .price(ex2CurHighestBidPrice)
+                  .amount(effectiveBaseOrderVolume)
+                  .timeDiscovered(Instant.now())
+                  .fee(ex2TakerFee)
+                  .build();
           LOG.info(
-                  "Arbitrage Opportunity Detected for {} ! Buy {} units on {} at {}, Sell {} units on {} at {}",
-                  currencyPair,
-                  effectiveBaseOrderVolume,
-                  askOrderBook.getKey(),
-                  ex1CurLowestAskPrice,
-                  effectiveBaseOrderVolume,
-                  bidOrderBook.getKey(),
-                  ex2CurHighestBidPrice);
+              "Arbitrage Opportunity Detected for {} ! Buy {} units on {} at {}, Sell {} units on {} at {}",
+              currencyPair,
+              effectiveBaseOrderVolume,
+              askOrderBook.getKey(),
+              ex1CurLowestAskPrice,
+              effectiveBaseOrderVolume,
+              bidOrderBook.getKey(),
+              ex2CurHighestBidPrice);
           LOG.info(
-                  "With fees calculated, Cost To Buy: {} , Amount Sold: {}, Profit: {}",
-                  totalCostToBuy,
-                  totalIncomeSold,
-                  totalIncomeSold.subtract(totalCostToBuy));
+              "With fees calculated, Cost To Buy: {} , Amount Sold: {}, Profit: {}",
+              totalCostToBuy,
+              totalIncomeSold,
+              totalIncomeSold.subtract(totalCostToBuy));
           tradeBuffer.insert(buyLow, sellHigh);
 
           tradesDiscovered = true;
           consumedAsks.add(asks.get(i));
           consumedBids.add(bids.get(j));
         } else {
-          //No other opportunities can possibly exist
+          // No other opportunities can possibly exist
           tradesDiscovered = false;
           break;
         }
@@ -289,13 +295,16 @@ public class SpatialArbitrager implements EventHandler<OrderBookEvent> {
   }
 
   /**
-   *  Iterative Approach to computing arbitrage opportunities.
+   * Iterative Approach to computing arbitrage opportunities.
+   *
    * @param currencyPair
    */
   public void processOrderbooks(CurrencyPair currencyPair) {
     try {
-      Entry<Exchange, OrderBook>[] ascendingAsksArr = new Entry[orderBooksAscendingAsks.size()];
-      Entry<Exchange, OrderBook>[] descendingBidsArr = new Entry[orderBooksDescendingBids.size()];
+      Entry<Exchange, OrderBook>[] ascendingAsksArr =
+          new Entry[orderBooksAscendingAsks.get(currencyPair).size()];
+      Entry<Exchange, OrderBook>[] descendingBidsArr =
+          new Entry[orderBooksDescendingBids.get(currencyPair).size()];
       ascendingAsksArr = orderBooksAscendingAsks.get(currencyPair).toArray(ascendingAsksArr);
       descendingBidsArr = orderBooksDescendingBids.get(currencyPair).toArray(descendingBidsArr);
 
@@ -303,8 +312,8 @@ public class SpatialArbitrager implements EventHandler<OrderBookEvent> {
       for (SpatialArbitrager.Entry<Exchange, OrderBook> askOrderBook : ascendingAsksArr) {
         for (SpatialArbitrager.Entry<Exchange, OrderBook> bidOrderBook : descendingBidsArr) {
 
-          //If no orders were submitted for the current bidOrderBook, there's no need
-          //for further processing of bidOrderBooks against the current askOrderBook
+          // If no orders were submitted for the current bidOrderBook, there's no need
+          // for further processing of bidOrderBooks against the current askOrderBook
           tradesPublished = extractTrades(currencyPair, askOrderBook, bidOrderBook);
           if (!tradesPublished) break;
         }

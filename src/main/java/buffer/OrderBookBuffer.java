@@ -38,8 +38,8 @@ public class OrderBookBuffer {
             ProducerType.MULTI,
             new SleepingWaitStrategy());
 
-    //disruptor.handleEventsWith(spatialArbitrager);
-    disruptor.handleEventsWith(spatialArbitragerV2);
+    disruptor.handleEventsWith(spatialArbitrager);
+    //disruptor.handleEventsWith(spatialArbitragerV2);
     //        disruptor.after(bookkeeper);
     disruptor.setDefaultExceptionHandler(new ExceptionHandler<>());
 

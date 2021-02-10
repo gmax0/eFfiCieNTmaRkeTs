@@ -41,12 +41,20 @@ public abstract class AbstractExchangeStream {
                         .getStreamingMarketDataService()
                         .getOrderBook(currencyPair, depth)
                         .subscribe(
-                            (trade) -> {
+                            (orderBook) -> {
                               // LOG.info("Trade: {}", trade);
-                              orderBookBuffer.insert(trade, getExchange(), currencyPair);
+                              if (orderBook.getAsks().isEmpty() || orderBook.getBids().isEmpty()) {
+                                getLog()
+                                    .warn(
+                                        "Orderbooks containing empty asks or bids detected for {} : {}",
+                                        getExchange(),
+                                        currencyPair);
+                              } else {
+                                orderBookBuffer.insert(orderBook, getExchange(), currencyPair);
+                              }
                             },
                             throwable -> getLog().error("Error in trade subscription", throwable)));
-                            //TODO: Send an empty order book to clear out state in arbitrage layer
+                // TODO: Send an empty order book to clear out state in arbitrage layer
               });
     } else {
       getLog().warn("{}ExchangeStream is disabled, not attempting WSS connection.", getExchange());
