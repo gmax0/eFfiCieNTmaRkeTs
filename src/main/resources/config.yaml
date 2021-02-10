@@ -4,9 +4,8 @@ strategies:
     enabled: false
   spatial:
     enabled: false
-    min_gain: .0015
+    min_gain: .0010
   #  min_gain: .002
-    cache_time: 15
 
 exchange:
   coinbase_pro:

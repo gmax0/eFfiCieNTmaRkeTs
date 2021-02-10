@@ -31,7 +31,6 @@ public class Configuration {
   public static class SpatialArbitragerConfig {
     boolean enabled;
     BigDecimal minGain;
-    BigDecimal cacheTime;
   }
 
   @SuperBuilder

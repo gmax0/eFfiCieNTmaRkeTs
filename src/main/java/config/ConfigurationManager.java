@@ -48,7 +48,6 @@ public class ConfigurationManager {
                 Configuration.SpatialArbitragerConfig.builder()
                     .enabled(yamlConfiguration.getBoolean("strategies.spatial.enabled"))
                     .minGain(yamlConfiguration.getBigDecimal("strategies.spatial.min_gain"))
-                    .cacheTime(yamlConfiguration.getBigDecimal("strategies.spatial.cache_time"))
                     .build())
             .coinbaseProConfig(
                 Configuration.CoinbaseProConfig.builder()
