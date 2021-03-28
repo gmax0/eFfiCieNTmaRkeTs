@@ -1,36 +1,28 @@
+[![Discord](https://img.shields.io/discord/825781395250741269?logo=Discord)](https://discord.gg/WUHBnh8m)
 
-### About
+# About
 
 eFfiCieNTmaRkeTs is a Java application that performs cross-exchange, tri(but not limited to 3)-angular arbitrage, and
 other realtime trading strategies in an attemptedly performant manner. 
 
 Open source libraries used include [knowm/XChange](https://github.com/knowm/XChange) and [LMAX's Disruptor](https://github.com/LMAX-Exchange/disruptor).
 
-### Supported Strategies
+## Supported Strategies
 
 - Cross-exchange Arbitrage
 - N-Angular Arbitrage (in-progress)
 - DeFi-based Arbitrage strategies (in-progress)
 
-### Supported Exchanges
+## Supported Exchanges
 
 - [x] CoinbasePro
-  - Tested and functional
-
 - [x] Gemini
-  - Tested and functional
-
 - [x] Kraken
-  - Tested and functional
-
 - [ ] Binance
-
 - [ ] Bitfinex
-
 - [ ] Cex
-  - Poorly performing WebSocket
 
-### Setup
+## Setup
 
 This application is intended to run with JDK8 or above. 
 It's highly recommended that you use [Azul's Zing JVM](https://www.azul.com/software-downloads-and-documents/) to minimize GC performance impacts.
@@ -59,6 +51,6 @@ coinbase_pro:
         passphrase: "${env:COINBASEPRO_PASSPHRASE}"
 ```
 
-### Exchange Specific Notes
+## Exchange Specific Notes
 Placeholder section for any anomalous exchange trading details, e.g. 
 which exchanges don't charge fees against the quote currency.
