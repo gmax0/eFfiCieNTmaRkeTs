@@ -4,7 +4,6 @@ import domain.constants.Exchange;
 import lombok.Getter;
 import org.apache.commons.configuration2.YAMLConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
-import org.knowm.xchange.currency.Currency;
 import org.knowm.xchange.currency.CurrencyPair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,7 +11,6 @@ import org.slf4j.LoggerFactory;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import static domain.constants.Exchange.*;
@@ -44,6 +42,10 @@ public class ConfigurationManager {
             });
     config =
         Configuration.builder()
+            .applicationConfig(
+                Configuration.ApplicationConfig.builder()
+                    .commandPort(yamlConfiguration.getInt("application.command_port"))
+                    .build())
             .spatialArbitragerConfig(
                 Configuration.SpatialArbitragerConfig.builder()
                     .enabled(yamlConfiguration.getBoolean("strategies.spatial.enabled"))

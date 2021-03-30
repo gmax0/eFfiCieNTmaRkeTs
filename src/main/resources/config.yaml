@@ -1,4 +1,7 @@
 
+application:
+  command_port: 3575
+
 strategies:
   n_angular:
     enabled: false
@@ -9,7 +12,7 @@ strategies:
 
 exchange:
   coinbase_pro:
-    enabled: true
+    enabled: false
     websocket:
       depth: 10
       currency_pairs:
@@ -23,7 +26,6 @@ exchange:
         api_key: "${env:COINBASEPRO_API_KEY}"
         secret_key: "${env:COINBASEPRO_SECRET_KEY}"
         passphrase: "${env:COINBASEPRO_PASSPHRASE}"
-      funding:
   kraken:
     enabled: false
     websocket:
@@ -53,7 +55,7 @@ exchange:
         api_key: "${env:BITFINEX_API_KEY}"
         secret_key: "${env:BITFINEX_SECRET_KEY}"
   gemini:
-    enabled: true
+    enabled: false
     websocket:
       depth: 10
       currency_pairs:

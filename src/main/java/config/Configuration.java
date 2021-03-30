@@ -14,6 +14,7 @@ import java.util.List;
 @Getter
 public class Configuration {
 
+  private ApplicationConfig applicationConfig;
   private SpatialArbitragerConfig spatialArbitragerConfig;
   private CoinbaseProConfig coinbaseProConfig;
   private KrakenConfig krakenConfig;
@@ -24,6 +25,12 @@ public class Configuration {
 
   public List<ExchangeConfig> getExchangeConfigs() {
     return Arrays.asList(coinbaseProConfig, krakenConfig, bitfinexConfig, geminiConfig);
+  }
+
+  @Builder
+  @Getter
+  public static class ApplicationConfig {
+    int commandPort;
   }
 
   @Builder

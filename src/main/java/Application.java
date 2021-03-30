@@ -1,8 +1,11 @@
 import buffer.OrderBookBuffer;
 import domain.constants.Exchange;
+import domain.control.CommandMonitor;
+import domain.control.ControlCommand;
 import org.knowm.xchange.currency.CurrencyPair;
 import rest.*;
 import services.BalanceCaptor;
+import services.control.ControlPad;
 import services.TradePublisher;
 import services.arbitrage.SpatialArbitragerV2;
 import streams.BitfinexExchangeStream;
@@ -40,6 +43,11 @@ public class Application {
         configurationManager.getActiveExchangesPairMap();
     LOG.info("Active Exchanges: {}", activeExchangesPairMap.keySet());
 
+    // Start Command Listener
+    CommandMonitor commandMonitor = new CommandMonitor();
+    ControlPad controlPad =
+        new ControlPad(commandMonitor, "127.0.0.1", config.getApplicationConfig().getCommandPort());
+
     // Setup Auxillary Services
     // TODO: setup a dependency injection framework
     MetadataAggregator metadataAggregator = new MetadataAggregator();
@@ -69,7 +77,7 @@ public class Application {
     SpatialArbitrager spatialArbitrager =
         new SpatialArbitrager(config, metadataAggregator, tradeBuffer);
     SpatialArbitragerV2 spatialArbitragerV2 =
-            new SpatialArbitragerV2(config, metadataAggregator, tradeBuffer);
+        new SpatialArbitragerV2(config, metadataAggregator, tradeBuffer);
     OrderBookBuffer orderBookBuffer = new OrderBookBuffer(spatialArbitrager, spatialArbitragerV2);
 
     // Start Buffers
@@ -132,92 +140,8 @@ public class Application {
                 }));
 
     while (true) {
-      Thread.sleep(Long.MAX_VALUE);
+      ControlCommand.Command command = commandMonitor.awaitCommand();
+      LOG.info("Command Received: {}", command.getKey());
     }
-
-    /*
-    //Real-Time Chart Testing
-    XYChart chart = new XYChartBuilder().width(800).height(600).title("CoinbasePro Order Book").xAxisTitle("USD").yAxisTitle("BTC").build();
-    chart.getStyler().setDefaultSeriesRenderStyle(XYSeries.XYSeriesRenderStyle.Area);
-
-    OrderBook orderBook = bookkeeper.getOrderBook(GEMINI, CurrencyPair.BTC_USD);
-    // BIDS
-    List<Number> xData = new ArrayList<>();
-    List<Number> yData = new ArrayList<>();
-    BigDecimal accumulatedBidUnits = new BigDecimal("0");
-    for (LimitOrder limitOrder : orderBook.getBids()) {
-            xData.add(limitOrder.getLimitPrice());
-            accumulatedBidUnits = accumulatedBidUnits.add(limitOrder.getOriginalAmount());
-            yData.add(accumulatedBidUnits);
-    }
-    Collections.reverse(xData);
-    Collections.reverse(yData);
-
-    // Bids Series
-    XYSeries series = chart.addSeries("bids", xData, yData);
-    series.setMarker(SeriesMarkers.NONE);
-
-    // ASKS
-    xData = new ArrayList<>();
-    yData = new ArrayList<>();
-    BigDecimal accumulatedAskUnits = new BigDecimal("0");
-    for (LimitOrder limitOrder : orderBook.getAsks()) {
-            xData.add(limitOrder.getLimitPrice());
-            accumulatedAskUnits = accumulatedAskUnits.add(limitOrder.getOriginalAmount());
-            yData.add(accumulatedAskUnits);
-    }
-
-    // Asks Series
-    series = chart.addSeries("asks", xData, yData);
-    series.setMarker(SeriesMarkers.NONE);
-    final SwingWrapper<XYChart> sw = new SwingWrapper<>(chart);
-    sw.displayChart();
-
-    while (true) {
-        Thread.sleep(1000);
-        javax.swing.SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                OrderBook orderBook = bookkeeper.getOrderBook(GEMINI, CurrencyPair.BTC_USD);
-                // BIDS
-                List<Number> xData = new ArrayList<>();
-                List<Number> yData = new ArrayList<>();
-                BigDecimal accumulatedBidUnits = new BigDecimal("0");
-                for (LimitOrder limitOrder : orderBook.getBids()) {
-                    xData.add(limitOrder.getLimitPrice());
-                    accumulatedBidUnits = accumulatedBidUnits.add(limitOrder.getOriginalAmount());
-                    yData.add(accumulatedBidUnits);
-                }
-                Collections.reverse(xData);
-                Collections.reverse(yData);
-
-                // Bids Series
-                XYSeries series = chart.updateXYSeries("bids", xData, yData, null);
-                series.setMarker(SeriesMarkers.NONE);
-
-                // ASKS
-                xData = new ArrayList<>();
-                yData = new ArrayList<>();
-                BigDecimal accumulatedAskUnits = new BigDecimal("0");
-                for (LimitOrder limitOrder : orderBook.getAsks()) {
-                    xData.add(limitOrder.getLimitPrice());
-                    accumulatedAskUnits = accumulatedAskUnits.add(limitOrder.getOriginalAmount());
-                    yData.add(accumulatedAskUnits);
-                }
-
-                // Asks Series
-                series = chart.updateXYSeries("asks", xData, yData, null);
-                series.setMarker(SeriesMarkers.NONE);
-
-                sw.repaintChart();
-            }
-        });
-    }
-    /*
-    bookkeeper.shutdown();
-    scheduledExecutorService.shutdown();
-    LOG.info("END");
-
-     */
   }
 }
