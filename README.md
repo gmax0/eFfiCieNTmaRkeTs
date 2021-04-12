@@ -67,7 +67,7 @@ Command Reference:
 
 ## Application Architecture
 
-<img src="../docs/efficientmarkets_v1.jpg">
+<img src="./docs/efficientmarkets_v1.jpg">
 
 ## Exchange Specific Notes
 Placeholder section for any anomalous exchange trading details, e.g. 
