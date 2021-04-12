@@ -65,10 +65,10 @@ public abstract class AbstractExchangeStream {
     if (this.isEnabled && this.streamingExchange.isAlive()) {
       getLog().info("Disposing {}ExchangeStream subscriptions...", getExchange());
       this.subscriptions.stream().forEach(subscription -> subscription.dispose());
-      getLog().info("Disconnecting from {}ExchangeStream WSS connection...");
+      getLog().info("Disconnecting from {}ExchangeStream WSS connection...", getExchange());
       this.streamingExchange.disconnect().blockingAwait();
     } else {
-      getLog().info("{}ExchangeStream connection is not alive. ");
+      getLog().info("{}ExchangeStream connection is not alive.", getExchange());
     }
   }
 }

@@ -5,7 +5,6 @@ import lombok.Getter;
 import java.util.Map;
 
 public class ControlCommand {
-
     public static final Command SILENT = new Command("0", "Awaiting Command.\n");
     public static final Command SHUTDOWN = new Command("1", "Application Shutdown.\n");
     public static final Command REBALANCE = new Command("2", "Rebalance to USD.\n");
@@ -18,8 +17,8 @@ public class ControlCommand {
 
     @Getter
     public static class Command {
-        String key;
-        String message;
+        final String key;
+        final String message;
 
         public Command(String key, String message) {
             this.key = key;

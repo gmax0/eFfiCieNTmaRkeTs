@@ -16,6 +16,7 @@ import java.nio.charset.StandardCharsets;
 public class ControlPad {
     private static final Logger LOG = LoggerFactory.getLogger(ControlPad.class);
     private CommandMonitor commandMonitor;
+    private AsynchronousServerSocketChannel serverSocketChannel;
 
     public ControlPad(CommandMonitor commandMonitor, String bindAddr, int bindPort ) throws IOException {
         this.commandMonitor = commandMonitor;
@@ -25,10 +26,10 @@ public class ControlPad {
         InetSocketAddress sockAddr = new InetSocketAddress(bindAddr, bindPort);
 
         //create a socket channel and bind to local bind address
-        AsynchronousServerSocketChannel serverSock =  AsynchronousServerSocketChannel.open().bind(sockAddr);
+        serverSocketChannel =  AsynchronousServerSocketChannel.open().bind(sockAddr);
 
         //start to accept the connection from client
-        serverSock.accept(serverSock, new CompletionHandler<>() {
+        serverSocketChannel.accept(serverSocketChannel, new CompletionHandler<>() {
             @Override
             public void completed(AsynchronousSocketChannel sockChannel, AsynchronousServerSocketChannel serverSock) {
                 //a connection is accepted, start to accept next connection
@@ -42,6 +43,15 @@ public class ControlPad {
                 LOG.error("fail to accept a connection");
             }
         } );
+    }
+
+    public void shutdown() throws IOException {
+        try {
+            LOG.info("Closing server socket channel.");
+            serverSocketChannel.close();
+        } catch (IOException e) {
+            //Ignore
+        }
     }
 
     private void startRead( AsynchronousSocketChannel sockChannel ) {

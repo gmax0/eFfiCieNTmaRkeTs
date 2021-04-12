@@ -55,13 +55,23 @@ coinbase_pro:
 After the application has successfully started and is receiving market data through exchange websockets, you may control
 its behavior through a TCP connection. 
 
-Connecting via netcat: ```netcat 127.0.0.1 3575```
+Connecting via netcat: 
+
+```netcat 127.0.0.1 3575```
+
 Command Reference:
 ```
 1 - Shutdown Application
 2 - Rebalance to USD
 ```
 
+## Application Architecture
+
+<img src="../docs/efficientmarkets_v1.jpg">
+
 ## Exchange Specific Notes
 Placeholder section for any anomalous exchange trading details, e.g. 
 which exchanges don't charge fees against the quote currency.
+
+## Features In Development
+- [ ] Session Metrics

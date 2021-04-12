@@ -130,18 +130,36 @@ public class Application {
     CexExchangeStream cexExchangeStream = new CexExchangeStream(config, orderBookBuffer);
     cexExchangeStream.start();
 
-    // Setup Shutdown Hook, TODO: clean this up later
-    Runtime.getRuntime()
-        .addShutdownHook(
-            new Thread(
-                () -> {
-                  balanceCaptor.refreshBalances();
-                  balanceCaptor.captureBalances();
-                }));
-
     while (true) {
       ControlCommand.Command command = commandMonitor.awaitCommand();
       LOG.info("Command Received: {}", command.getKey());
+      switch (command.getKey()) {
+        case "1":
+          //Shutdown Application
+          LOG.info("Shutting down application...");
+
+          //Stream Shutdown
+          geminiExchangeStream.shutdown();
+          krakenExchangeStream.shutdown();
+          coinbaseProExchangeStream.shutdown();
+          bitfinexExchangeStream.shutdown();
+          binanceExchangeStream.shutdown();
+          cexExchangeStream.shutdown();
+
+          //Buffer Shutdown
+          orderBookBuffer.shutdown();
+          tradeBuffer.shutdown();
+
+          //Command Server Shutdown
+          controlPad.shutdown();
+
+          return;
+        case "2":
+          //Rebalance to USD
+          LOG.info("Rebalancing portfolios...");
+          break;
+        default:
+      }
     }
   }
 }
