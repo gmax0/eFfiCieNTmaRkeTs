@@ -8,23 +8,26 @@ import org.knowm.xchange.dto.Order;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rest.AbstractExchangeRestAPI;
+import util.ThreadFactory;
 
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class TradePublisher implements EventHandler<TradeEvent> {
-
   private static final Logger LOG = LoggerFactory.getLogger(TradePublisher.class);
 
   private MetadataAggregator metadataAggregator;
-
   private final Map<Exchange, AbstractExchangeRestAPI> exchangeRestAPIMap = new HashMap<>();
+  private ExecutorService executorService;
 
   public TradePublisher() {}
 
-  public TradePublisher(MetadataAggregator metadataAggregator, AbstractExchangeRestAPI... abstractExchangeRestAPI) {
+  public TradePublisher(
+      MetadataAggregator metadataAggregator, AbstractExchangeRestAPI... abstractExchangeRestAPI) {
     this.metadataAggregator = metadataAggregator;
 
     // Load the Exchange -> ExchangeRestAPI map
@@ -33,6 +36,10 @@ public class TradePublisher implements EventHandler<TradeEvent> {
         exchangeRestAPIMap.put(exchangeRestAPI1.getExchange(), exchangeRestAPI1);
       }
     }
+
+    // Initialize Executor
+    executorService =
+        Executors.newFixedThreadPool(2, new ThreadFactory("trade-publisher-executor-service"));
   }
 
   @Override
@@ -185,14 +192,25 @@ public class TradePublisher implements EventHandler<TradeEvent> {
     trade1.setAmount(maxActionableAmount);
     trade2.setAmount(maxActionableAmount);
 
-    try {
-      if (maxActionableAmount.compareTo(BigDecimal.ZERO) > 0) {
-        exchangeRestAPI1.submitTrade(trade1);
-        exchangeRestAPI2.submitTrade(trade2);
-      }
-    } catch (IOException e) {
-      LOG.error("Caught exception while executing order submission: {}", e);
-      LOG.error("Extended Stack Trace: {}", e.getStackTrace());
+    if (maxActionableAmount.compareTo(BigDecimal.ZERO) > 0) {
+      executorService.execute(
+          () -> {
+            try {
+              exchangeRestAPI1.submitTrade(trade1);
+            } catch (IOException e) {
+              LOG.error("Caught exception while executing order submission: {}", e);
+              LOG.error("Extended Stack Trace: {}", e.getStackTrace());
+            }
+          });
+      executorService.execute(
+          () -> {
+            try {
+              exchangeRestAPI2.submitTrade(trade2);
+            } catch (IOException e) {
+              LOG.error("Caught exception while executing order submission: {}", e);
+              LOG.error("Extended Stack Trace: {}", e.getStackTrace());
+            }
+          });
     }
   }
 }

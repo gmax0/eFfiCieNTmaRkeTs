@@ -35,7 +35,6 @@ public class TradeBuffer {
             new SleepingWaitStrategy());
 
     disruptor.handleEventsWith(tradePublisher);
-    //        disruptor.after(bookkeeper);
     disruptor.setDefaultExceptionHandler(new TradeBuffer.ExceptionHandler<>());
 
     this.ringBuffer = disruptor.getRingBuffer();

@@ -12,7 +12,7 @@ strategies:
 
 exchange:
   coinbase_pro:
-    enabled: false
+    enabled: true
     websocket:
       depth: 10
       currency_pairs:
@@ -55,7 +55,7 @@ exchange:
         api_key: "${env:BITFINEX_API_KEY}"
         secret_key: "${env:BITFINEX_SECRET_KEY}"
   gemini:
-    enabled: false
+    enabled: true
     websocket:
       depth: 10
       currency_pairs:

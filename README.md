@@ -74,4 +74,4 @@ Placeholder section for any anomalous exchange trading details, e.g.
 which exchanges don't charge fees against the quote currency.
 
 ## Features In Development
-- [ ] Session Metrics
+- [ ] Session Metrics/Event Logging
