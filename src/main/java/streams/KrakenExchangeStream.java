@@ -13,11 +13,11 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 
-import static domain.constants.Exchange.GEMINI;
+import static domain.constants.Exchange.KRAKEN;
 
 public class KrakenExchangeStream extends AbstractExchangeStream {
   private static final Logger LOG = LoggerFactory.getLogger(GeminiExchangeStream.class);
-  private static final Exchange exchangeName = GEMINI;
+  private static final Exchange exchangeName = KRAKEN;
 
   @Override
   Logger getLog() {

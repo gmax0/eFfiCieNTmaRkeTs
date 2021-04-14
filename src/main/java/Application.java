@@ -158,6 +158,14 @@ public class Application {
           //Rebalance to USD
           LOG.info("Rebalancing portfolios...");
           break;
+        case "3":
+          //Reconnect Websockets
+          geminiExchangeStream.reset();
+          krakenExchangeStream.reset();
+          coinbaseProExchangeStream.reset();
+          bitfinexExchangeStream.reset();
+          binanceExchangeStream.reset();
+          cexExchangeStream.reset();
         default:
       }
     }

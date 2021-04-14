@@ -68,7 +68,7 @@ public class OrderBookBuffer {
     public void handleEventException(Throwable ex, long sequence, Object event) {
       LOG.error(
           "Exception occurred while processing a {}.",
-          ((OrderBookEvent) event).getClass().getSimpleName(),
+          event.getClass().getSimpleName(),
           ex);
     }
 

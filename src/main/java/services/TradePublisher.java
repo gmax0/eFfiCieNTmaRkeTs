@@ -39,7 +39,7 @@ public class TradePublisher implements EventHandler<TradeEvent> {
 
     // Initialize Executor
     executorService =
-        Executors.newFixedThreadPool(2, new ThreadFactory("trade-publisher-executor-service"));
+        Executors.newFixedThreadPool(4, new ThreadFactory("trade-publisher-executor-service"));
   }
 
   @Override

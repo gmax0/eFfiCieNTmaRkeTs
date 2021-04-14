@@ -9,8 +9,9 @@
     <version>0.1.0-SNAPSHOT</version>
 
     <properties>
-
+        <knowm.xchange.version>5.0.7</knowm.xchange.version>
     </properties>
+    
     <repositories>
         <repository>
             <id>local-repo</id>
@@ -43,37 +44,37 @@
         <dependency>
             <groupId>org.knowm.xchange</groupId>
             <artifactId>xchange-core</artifactId>
-            <version>5.0.6-SNAPSHOT</version>
+            <version>${knowm.xchange.version}</version>
         </dependency>
         <dependency>
             <groupId>org.knowm.xchange</groupId>
             <artifactId>xchange-stream-coinbasepro</artifactId>
-            <version>5.0.6-SNAPSHOT</version>
+            <version>${knowm.xchange.version}</version>
         </dependency>
         <dependency>
             <groupId>org.knowm.xchange</groupId>
             <artifactId>xchange-stream-kraken</artifactId>
-            <version>5.0.6-SNAPSHOT</version>
+            <version>${knowm.xchange.version}</version>
         </dependency>
         <dependency>
             <groupId>org.knowm.xchange</groupId>
             <artifactId>xchange-stream-bitfinex</artifactId>
-            <version>5.0.6-SNAPSHOT</version>
+            <version>${knowm.xchange.version}</version>
         </dependency>
         <dependency>
             <groupId>org.knowm.xchange</groupId>
-            <artifactId>xchange-stream-gemini</artifactId>
-            <version>5.0.6-SNAPSHOT</version>
+            <artifactId>xchange-stream-gemini-v2</artifactId>
+            <version>${knowm.xchange.version}</version>
         </dependency>
         <dependency>
             <groupId>org.knowm.xchange</groupId>
             <artifactId>xchange-stream-binance</artifactId>
-            <version>5.0.6-SNAPSHOT</version>
+            <version>${knowm.xchange.version}</version>
         </dependency>
         <dependency>
             <groupId>org.knowm.xchange</groupId>
             <artifactId>xchange-stream-cexio</artifactId>
-            <version>5.0.6-SNAPSHOT</version>
+            <version>${knowm.xchange.version}</version>
         </dependency>
 
 
