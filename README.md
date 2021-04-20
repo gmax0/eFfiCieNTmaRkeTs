@@ -1,7 +1,7 @@
 [![Discord](https://img.shields.io/discord/825781395250741269?logo=Discord)](https://discord.gg/WUHBnh8m)
 
 <p align="center">
-    <img src="./docs/effmarkets.jpg">
+    <img height="180" width="450" src="./docs/effmarkets.jpg"/>
 </p>
 
 # About
