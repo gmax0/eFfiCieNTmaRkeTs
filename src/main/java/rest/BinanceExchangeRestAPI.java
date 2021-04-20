@@ -2,9 +2,11 @@ package rest;
 
 import config.Configuration;
 import domain.constants.Exchange;
+import domain.constants.OrderType;
 import org.knowm.xchange.ExchangeFactory;
 import org.knowm.xchange.ExchangeSpecification;
 import org.knowm.xchange.bitfinex.BitfinexExchange;
+import org.knowm.xchange.dto.trade.LimitOrder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import services.MetadataAggregator;
@@ -18,7 +20,7 @@ public class BinanceExchangeRestAPI extends AbstractExchangeRestAPI {
     private final Exchange exchange = BINANCE;
 
     @Override
-    public Logger getLog() {
+    Logger getLog() {
         return LOG;
     }
 
@@ -52,5 +54,10 @@ public class BinanceExchangeRestAPI extends AbstractExchangeRestAPI {
         } else {
             LOG.warn("{}ExchangeRestAPI is diabled", exchange);
         }
+    }
+
+    //TODO: Add advance limit order params
+    LimitOrder customizeLimitOrder(LimitOrder limitOrder, OrderType orderType) {
+        return limitOrder;
     }
 }

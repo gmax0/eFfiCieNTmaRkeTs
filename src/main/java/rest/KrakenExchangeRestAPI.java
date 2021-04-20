@@ -2,14 +2,19 @@ package rest;
 
 import config.Configuration;
 import domain.constants.Exchange;
+import domain.constants.OrderType;
 import org.knowm.xchange.ExchangeFactory;
 import org.knowm.xchange.ExchangeSpecification;
+import org.knowm.xchange.dto.trade.LimitOrder;
+import org.knowm.xchange.gemini.v1.dto.trade.GeminiOrderFlags;
 import org.knowm.xchange.kraken.KrakenExchange;
+import org.knowm.xchange.kraken.dto.trade.KrakenOrderFlags;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import services.MetadataAggregator;
 
 import java.io.IOException;
+import java.util.Set;
 
 import static domain.constants.Exchange.KRAKEN;
 
@@ -18,7 +23,7 @@ public class KrakenExchangeRestAPI extends AbstractExchangeRestAPI {
   private final domain.constants.Exchange exchange = KRAKEN;
 
   @Override
-  public Logger getLog() {
+  Logger getLog() {
     return LOG;
   }
 
@@ -52,5 +57,16 @@ public class KrakenExchangeRestAPI extends AbstractExchangeRestAPI {
     } else {
       LOG.warn("{}RestAPI is disabled", exchange);
     }
+  }
+
+  LimitOrder customizeLimitOrder(LimitOrder limitOrder, OrderType orderType) {
+    switch (orderType) {
+      case LIMIT_MAKER_ONLY:
+        limitOrder.setOrderFlags(Set.of(GeminiOrderFlags.POST_ONLY));
+        break;
+      default:
+        break;
+    }
+    return limitOrder;
   }
 }

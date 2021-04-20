@@ -31,6 +31,13 @@ public class Configuration {
   @Getter
   public static class ApplicationConfig {
     int commandPort;
+    JournalerConfig journalerConfig;
+  }
+
+  @Builder
+  @Getter
+  public static class JournalerConfig {
+    boolean enabled;
   }
 
   @Builder

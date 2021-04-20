@@ -8,6 +8,7 @@ import org.knowm.xchange.dto.Order;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rest.AbstractExchangeRestAPI;
+import services.journal.TradeJournaler;
 import util.ThreadFactory;
 
 import java.io.IOException;
@@ -22,13 +23,17 @@ public class TradePublisher implements EventHandler<TradeEvent> {
 
   private MetadataAggregator metadataAggregator;
   private final Map<Exchange, AbstractExchangeRestAPI> exchangeRestAPIMap = new HashMap<>();
+  private TradeJournaler tradeJournaler;
   private ExecutorService executorService;
 
   public TradePublisher() {}
 
   public TradePublisher(
-      MetadataAggregator metadataAggregator, AbstractExchangeRestAPI... abstractExchangeRestAPI) {
+      MetadataAggregator metadataAggregator,
+      TradeJournaler tradeJournaler,
+      AbstractExchangeRestAPI... abstractExchangeRestAPI) {
     this.metadataAggregator = metadataAggregator;
+    this.tradeJournaler = tradeJournaler;
 
     // Load the Exchange -> ExchangeRestAPI map
     for (AbstractExchangeRestAPI exchangeRestAPI1 : abstractExchangeRestAPI) {
@@ -50,37 +55,10 @@ public class TradePublisher implements EventHandler<TradeEvent> {
 
     if (trade3 == null) {
       if (trade1 != null && trade2 != null) {
-        LOG.info(
-            "Trade 1: {} {} {} {} {} {} {}",
-            trade1.getExchange(),
-            trade1.getCurrencyPair(),
-            trade1.getOrderActionType(),
-            trade1.getOrderType(),
-            trade1.getPrice(),
-            trade1.getAmount(),
-            trade1.getTimeDiscovered());
-        LOG.info(
-            "Trade 2: {} {} {} {} {} {} {}",
-            trade2.getExchange(),
-            trade2.getCurrencyPair(),
-            trade2.getOrderActionType(),
-            trade2.getOrderType(),
-            trade2.getPrice(),
-            trade2.getAmount(),
-            trade2.getTimeDiscovered());
-
         processSpatialArbitrageTrade(trade1, trade2);
       }
     } else {
-      LOG.info(
-          "Trade 3: {} {} {} {} {} {} {}",
-          trade3.getExchange(),
-          trade3.getCurrencyPair(),
-          trade3.getOrderActionType(),
-          trade3.getOrderType(),
-          trade3.getPrice(),
-          trade3.getAmount(),
-          trade3.getTimeDiscovered());
+        processTriangularArbitrage(trade1, trade2, trade3);
     }
   }
 
@@ -173,8 +151,12 @@ public class TradePublisher implements EventHandler<TradeEvent> {
     return maxBaseAmount;
   }
 
-  // Trade1 must be the BUY order, Trade2 must be the SELL order.
-  public void processSpatialArbitrageTrade(Trade trade1, Trade trade2) {
+  /**
+   * Submits both legs of a spatial arbitrage opportunity to their respective exchange.
+   * @param trade1 - The BUY order of the opportunity
+   * @param trade2 - The SELL order of the opportunity
+   */
+  private void processSpatialArbitrageTrade(Trade trade1, Trade trade2) {
     // Load exchangeRestAPIs for both Trades
     AbstractExchangeRestAPI exchangeRestAPI1 = exchangeRestAPIMap.get(trade1.getExchange());
     if (exchangeRestAPI1 == null) {
@@ -193,6 +175,7 @@ public class TradePublisher implements EventHandler<TradeEvent> {
     trade2.setAmount(maxActionableAmount);
 
     if (maxActionableAmount.compareTo(BigDecimal.ZERO) > 0) {
+      tradeJournaler.logSubmittedTrade(trade1);
       executorService.execute(
           () -> {
             try {
@@ -202,6 +185,7 @@ public class TradePublisher implements EventHandler<TradeEvent> {
               LOG.error("Extended Stack Trace: {}", e.getStackTrace());
             }
           });
+      tradeJournaler.logSubmittedTrade(trade2);
       executorService.execute(
           () -> {
             try {
@@ -212,5 +196,9 @@ public class TradePublisher implements EventHandler<TradeEvent> {
             }
           });
     }
+  }
+
+  private void processTriangularArbitrage(Trade trade1, Trade trade2, Trade trade3) {
+    //TODO: To-implement
   }
 }

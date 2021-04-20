@@ -8,6 +8,7 @@ import services.BalanceCaptor;
 import services.control.ControlPad;
 import services.TradePublisher;
 import services.arbitrage.SpatialArbitragerV2;
+import services.journal.TradeJournaler;
 import streams.BitfinexExchangeStream;
 import streams.CoinbaseProExchangeStream;
 import streams.GeminiExchangeStream;
@@ -50,6 +51,7 @@ public class Application {
 
     // Setup Auxillary Services
     // TODO: setup a dependency injection framework
+    TradeJournaler tradeJournaler = new TradeJournaler(config);
     MetadataAggregator metadataAggregator = new MetadataAggregator();
     BalanceCaptor balanceCaptor = new BalanceCaptor(metadataAggregator, activeExchangesPairMap);
 
@@ -69,13 +71,14 @@ public class Application {
     TradePublisher tradePublisher =
         new TradePublisher(
             metadataAggregator,
+            tradeJournaler,
             geminiExchangeRestAPI,
             coinbaseProExchangeRestAPI,
             bitfinexExchangeRestAPI,
             krakenExchangeRestAPI);
     TradeBuffer tradeBuffer = new TradeBuffer(tradePublisher);
     SpatialArbitrager spatialArbitrager =
-        new SpatialArbitrager(config, metadataAggregator, tradeBuffer);
+        new SpatialArbitrager(config, metadataAggregator, tradeBuffer, tradeJournaler);
     SpatialArbitragerV2 spatialArbitragerV2 =
         new SpatialArbitragerV2(config, metadataAggregator, tradeBuffer);
     OrderBookBuffer orderBookBuffer = new OrderBookBuffer(spatialArbitrager, spatialArbitragerV2);

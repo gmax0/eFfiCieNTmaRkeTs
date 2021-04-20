@@ -1,6 +1,9 @@
 
 application:
   command_port: 3575
+  journaler:
+    enabled: true # Controls whether trading events are saved to the database
+    db_connection:
 
 strategies:
   n_angular:

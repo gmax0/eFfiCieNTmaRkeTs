@@ -1,5 +1,6 @@
 package services;
 
+import buffer.events.TradeEvent;
 import domain.Trade;
 import domain.constants.Exchange;
 import org.junit.Before;
@@ -12,6 +13,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import rest.GeminiExchangeRestAPI;
 import rest.KrakenExchangeRestAPI;
+import services.journal.TradeJournaler;
 import testUtils.MetadataAggregatorMocker;
 
 import java.math.BigDecimal;
@@ -31,6 +33,8 @@ public class TradePublisherTest {
     @Mock
     private MetadataAggregator metadataAggregator;
     @Mock
+    private TradeJournaler tradeJournaler;
+    @Mock
     private KrakenExchangeRestAPI krakenExchangeRestAPI;
     @Mock
     private GeminiExchangeRestAPI geminiExchangeRestAPI;
@@ -45,7 +49,7 @@ public class TradePublisherTest {
         when(krakenExchangeRestAPI.getExchange()).thenReturn(KRAKEN);
         when(geminiExchangeRestAPI.getExchange()).thenReturn(GEMINI);
 
-        tradePublisher = new TradePublisher(metadataAggregator, krakenExchangeRestAPI, geminiExchangeRestAPI);
+        tradePublisher = new TradePublisher(metadataAggregator, tradeJournaler, krakenExchangeRestAPI, geminiExchangeRestAPI);
     }
 
     @Test
@@ -77,7 +81,11 @@ public class TradePublisherTest {
                 .fee(new BigDecimal(0.05))
                 .build();
 
-        tradePublisher.processSpatialArbitrageTrade(trade1, trade2);
+        TradeEvent tradeEvent = new TradeEvent();
+        tradeEvent.setTrade1(trade1);
+        tradeEvent.setTrade2(trade2);
+
+        tradePublisher.onEvent(tradeEvent, 0, true);
     }
 
     @Test

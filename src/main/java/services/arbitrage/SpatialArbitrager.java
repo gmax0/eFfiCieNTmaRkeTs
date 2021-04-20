@@ -13,6 +13,7 @@ import org.knowm.xchange.dto.trade.LimitOrder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import services.MetadataAggregator;
+import services.journal.TradeJournaler;
 import util.ThreadFactory;
 
 import java.math.BigDecimal;
@@ -23,6 +24,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -50,6 +52,7 @@ public class SpatialArbitrager implements EventHandler<OrderBookEvent> {
         return e1.getValue().getBids().get(0).compareTo(e2.getValue().getBids().get(0));
       };
 
+  private TradeJournaler tradeJournaler;
   private MetadataAggregator metadataAggregator;
   private TradeBuffer tradeBuffer;
   private ExecutorService executorService;
@@ -62,7 +65,10 @@ public class SpatialArbitrager implements EventHandler<OrderBookEvent> {
   private BigDecimal minGain;
 
   public SpatialArbitrager(
-      Configuration cfg, MetadataAggregator metadataAggregator, TradeBuffer tradeBuffer) {
+      Configuration cfg,
+      MetadataAggregator metadataAggregator,
+      TradeBuffer tradeBuffer,
+      TradeJournaler tradeJournaler) {
     this.minGain = cfg.getSpatialArbitragerConfig().getMinGain();
 
     this.metadataAggregator = metadataAggregator;
@@ -155,17 +161,6 @@ public class SpatialArbitrager implements EventHandler<OrderBookEvent> {
     }
 
     processOrderbooks(currencyPair);
-
-    // Submit Task
-    /*
-    executorService.submit(new ComputeArbitrageTask(
-            this,
-            (TreeSet<Entry<Exchange, OrderBook>>) orderBooksAscendingAsks.get(currencyPair).clone(),
-            (TreeSet<Entry<Exchange, OrderBook>>) orderBooksDescendingBids.get(currencyPair).clone(),
-            currencyPair,
-            metadataAggregator
-    ));
-     */
   }
 
   /**
@@ -228,54 +223,56 @@ public class SpatialArbitrager implements EventHandler<OrderBookEvent> {
         // Check for costToBuy = 0: .02371 * .0000004 / (1 - .0026)
         // Prices AND Fees are assumed to be in the quote currency (See README for details)
         BigDecimal costToBuy = ex1CurLowestAskPrice.multiply(effectiveBaseOrderVolume);
-        BigDecimal totalCostToBuy = costToBuy.add(costToBuy.multiply(ex1TakerFee));
+        BigDecimal buyFee = costToBuy.multiply(ex1TakerFee);
+        BigDecimal totalCostToBuy = costToBuy.add(costToBuy.multiply(buyFee));
 
         BigDecimal incomeSold = ex2CurHighestBidPrice.multiply(effectiveBaseOrderVolume);
-        BigDecimal totalIncomeSold = incomeSold.subtract(incomeSold.multiply(ex2TakerFee));
+        BigDecimal sellFee = incomeSold.multiply(ex2TakerFee);
+        BigDecimal totalIncomeSold = incomeSold.subtract(sellFee);
 
+        // Arbitrage Opportunity Detected!
         if (totalIncomeSold.compareTo(totalCostToBuy) > 0
             && totalIncomeSold
                     .subtract(totalCostToBuy)
                     .divide(totalCostToBuy, 5, RoundingMode.HALF_EVEN)
                     .compareTo(minGain)
                 >= 0) {
+
+          UUID uuid = UUID.randomUUID();
+          Instant now = Instant.now();
+
           Trade buyLow =
               Trade.builder()
+                  .uuid(uuid)
                   .exchange(askOrderBook.getKey())
                   .currencyPair(currencyPair)
                   .orderActionType(BID)
                   .orderType(LIMIT)
                   .price(ex1CurLowestAskPrice)
                   .amount(effectiveBaseOrderVolume)
-                  .timeDiscovered(Instant.now())
-                  .fee(ex1TakerFee)
+                  .feePercentage(ex1TakerFee)
+                  .timeDiscovered(now)
+                  .fee(buyFee)
+                  .total(totalCostToBuy)
                   .build();
           Trade sellHigh =
               Trade.builder()
+                  .uuid(uuid)
                   .exchange(bidOrderBook.getKey())
                   .currencyPair(currencyPair)
                   .orderActionType(ASK)
                   .orderType(LIMIT)
                   .price(ex2CurHighestBidPrice)
                   .amount(effectiveBaseOrderVolume)
-                  .timeDiscovered(Instant.now())
-                  .fee(ex2TakerFee)
+                  .feePercentage(ex2TakerFee)
+                  .timeDiscovered(now)
+                  .fee(sellFee)
+                  .total(totalIncomeSold)
                   .build();
-          LOG.info(
-              "Arbitrage Opportunity Detected for {} ! Buy {} units on {} at {}, Sell {} units on {} at {}",
-              currencyPair,
-              effectiveBaseOrderVolume,
-              askOrderBook.getKey(),
-              ex1CurLowestAskPrice,
-              effectiveBaseOrderVolume,
-              bidOrderBook.getKey(),
-              ex2CurHighestBidPrice);
-          LOG.info(
-              "With fees calculated, Cost To Buy: {} , Amount Sold: {}, Profit: {}",
-              totalCostToBuy,
-              totalIncomeSold,
-              totalIncomeSold.subtract(totalCostToBuy));
+
+          // Submit + Journal Trade
           tradeBuffer.insert(buyLow, sellHigh);
+          tradeJournaler.logDetectedTrade(buyLow, sellHigh);
 
           tradesDiscovered = true;
           consumedAsks.add(asks.get(i));

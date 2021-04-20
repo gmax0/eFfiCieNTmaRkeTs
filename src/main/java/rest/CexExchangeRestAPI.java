@@ -2,10 +2,12 @@ package rest;
 
 import config.Configuration;
 import domain.constants.Exchange;
+import domain.constants.OrderType;
 import org.knowm.xchange.ExchangeFactory;
 import org.knowm.xchange.ExchangeSpecification;
 import org.knowm.xchange.bitfinex.BitfinexExchange;
 import org.knowm.xchange.cexio.CexIOExchange;
+import org.knowm.xchange.dto.trade.LimitOrder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import services.MetadataAggregator;
@@ -19,7 +21,7 @@ public class CexExchangeRestAPI extends AbstractExchangeRestAPI {
     private final Exchange exchange = CEX;
 
     @Override
-    public Logger getLog() {
+    Logger getLog() {
         return LOG;
     }
 
@@ -54,5 +56,10 @@ public class CexExchangeRestAPI extends AbstractExchangeRestAPI {
         } else {
             LOG.warn("{}ExchangeRestAPI is diabled", exchange);
         }
+    }
+
+    // TODO: Add advance limit order params
+    LimitOrder customizeLimitOrder(LimitOrder limitOrder, OrderType orderType) {
+        return limitOrder;
     }
 }

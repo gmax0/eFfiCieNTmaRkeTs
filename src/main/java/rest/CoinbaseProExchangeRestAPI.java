@@ -2,14 +2,18 @@ package rest;
 
 import config.Configuration;
 import domain.constants.Exchange;
+import domain.constants.OrderType;
 import org.knowm.xchange.ExchangeFactory;
 import org.knowm.xchange.ExchangeSpecification;
 import org.knowm.xchange.coinbasepro.CoinbaseProExchange;
+import org.knowm.xchange.coinbasepro.dto.trade.CoinbaseProOrderFlags;
+import org.knowm.xchange.dto.trade.LimitOrder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import services.MetadataAggregator;
 
 import java.io.IOException;
+import java.util.Set;
 
 import static domain.constants.Exchange.COINBASE_PRO;
 
@@ -18,7 +22,7 @@ public class CoinbaseProExchangeRestAPI extends AbstractExchangeRestAPI {
   private final Exchange exchange = COINBASE_PRO;
 
   @Override
-  public Logger getLog() {
+  Logger getLog() {
     return LOG;
   }
 
@@ -56,5 +60,23 @@ public class CoinbaseProExchangeRestAPI extends AbstractExchangeRestAPI {
     } else {
       LOG.warn("{}RestAPI is disabled", exchange);
     }
+  }
+
+  LimitOrder customizeLimitOrder(LimitOrder limitOrder, OrderType orderType) {
+    switch (orderType) {
+      case LIMIT_FOK:
+        limitOrder.setOrderFlags(Set.of(CoinbaseProOrderFlags.FILL_OR_KILL));
+        break;
+      case LIMIT_IOC:
+        limitOrder.setOrderFlags(Set.of(CoinbaseProOrderFlags.IMMEDIATE_OR_CANCEL));
+        break;
+      case LIMIT_MAKER_ONLY:
+        //Not valid when combined with either FOK or IOC
+        limitOrder.setOrderFlags(Set.of(CoinbaseProOrderFlags.POST_ONLY));
+        break;
+      default:
+        break;
+    }
+    return limitOrder;
   }
 }

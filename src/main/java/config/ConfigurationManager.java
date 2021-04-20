@@ -45,6 +45,10 @@ public class ConfigurationManager {
             .applicationConfig(
                 Configuration.ApplicationConfig.builder()
                     .commandPort(yamlConfiguration.getInt("application.command_port"))
+                    .journalerConfig(
+                        Configuration.JournalerConfig.builder()
+                            .enabled(yamlConfiguration.getBoolean("application.journaler.enabled"))
+                            .build())
                     .build())
             .spatialArbitragerConfig(
                 Configuration.SpatialArbitragerConfig.builder()
