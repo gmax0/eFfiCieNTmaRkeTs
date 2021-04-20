@@ -1,5 +1,9 @@
 [![Discord](https://img.shields.io/discord/825781395250741269?logo=Discord)](https://discord.gg/WUHBnh8m)
 
+<p align="center">
+    <img src="./docs/effmarkets.jpg">
+</p>
+
 # About
 
 eFfiCieNTmaRkeTs is a Java application that performs cross-exchange, tri(but not limited to 3)-angular arbitrage, and
